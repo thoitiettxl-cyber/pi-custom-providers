@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@earendil-works/pi-ai": ["../../../ai/src/index.ts"],
+      "@earendil-works/pi-ai/*": ["../../../ai/src/*"],
+      "@earendil-works/pi-ai/compat": ["../../../ai/src/compat.ts"],
+      "@earendil-works/pi-coding-agent": ["../../src/index.ts"]
+    }
+  },
+  "include": ["*.ts"]
+}

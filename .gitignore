@@ -1,0 +1,15 @@
+node_modules/
+providers/*/node_modules/
+*.log
+.env
+.env.local
+.env.*.local
+auth.json
+**/auth.json
+.DS_Store
+*.tgz
+.turbo/
+coverage/
+dist/
+tmp/
+.pi/

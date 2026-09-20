@@ -1,0 +1,40 @@
+{
+  "name": "pi-extension-custom-provider-gemini-antigravity",
+  "private": true,
+  "version": "0.86.1",
+  "type": "module",
+  "description": "Google Antigravity OAuth + Node-native CCA SSE stream for earendil/pi 0.86.1 (no Bun/@oh-my-pi stream runtime)",
+  "scripts": {
+    "clean": "echo 'nothing to clean'",
+    "build": "echo 'nothing to build'",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test ./oauth.test.ts ./schema-sanitize.test.ts"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "22.13.10",
+    "typescript": "5.9.2",
+    "@earendil-works/pi-ai": "0.86.1",
+    "@earendil-works/pi-coding-agent": "0.86.1"
+  },
+  "optionalDependencies": {
+    "@oh-my-pi/pi-ai": "18.2.6",
+    "@oh-my-pi/pi-catalog": "18.2.6"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-ai": {
+      "optional": true
+    },
+    "@earendil-works/pi-coding-agent": {
+      "optional": true
+    }
+  }
+}
