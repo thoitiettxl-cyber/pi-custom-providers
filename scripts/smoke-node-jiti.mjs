@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
- * Node+jiti smoke: load each provider extension factory (registration path).
- * Never prints secrets.
+ * Node+jiti smoke: load each provider factory the way Pi does, then validate
+ * registrations with earendil validateExtensionProvider and assert every model
+ * has baseUrl. Never prints secrets.
  */
 import { createRequire } from "node:module";
-import { writeFileSync, existsSync, readFileSync } from "node:fs";
+import { writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -27,8 +28,21 @@ function resolveJiti() {
   }
 }
 
+function resolveValidate() {
+  const candidates = [
+    join(ROOT, "node_modules/@earendil-works/pi-coding-agent/dist/core/provider-composer.js"),
+    "/workspace/pi/packages/coding-agent/dist/core/provider-composer.js",
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) return pathToFileURL(p).href;
+  }
+  throw new Error("provider-composer.js not found for validateExtensionProvider");
+}
+
 const { createJiti } = await import(resolveJiti());
 const jiti = createJiti(import.meta.url, { interopDefault: true, moduleCache: false });
+const { validateExtensionProvider } = await import(resolveValidate());
+
 const results = {
   when_ict: new Date().toISOString(),
   runtime: "node+jiti",
@@ -36,8 +50,27 @@ const results = {
   providers: {},
 };
 
+function assertModelBaseUrls(id, cfg) {
+  const models = Array.isArray(cfg?.models) ? cfg.models : [];
+  const missing = models.filter((m) => !m?.baseUrl || !String(m.baseUrl).trim());
+  if (!cfg?.baseUrl || !String(cfg.baseUrl).trim()) {
+    throw new Error(`provider ${id}: missing provider-level baseUrl`);
+  }
+  if (missing.length) {
+    throw new Error(
+      `provider ${id}: ${missing.length}/${models.length} models missing baseUrl (e.g. ${missing[0]?.id})`,
+    );
+  }
+  try {
+    validateExtensionProvider(id, undefined, undefined, cfg);
+  } catch (e) {
+    throw new Error(`validateExtensionProvider(${id}): ${e instanceof Error ? e.message : String(e)}`);
+  }
+  return { modelCount: models.length, providerBaseUrl: cfg.baseUrl };
+}
+
 async function smoke(name, indexPath, probeImport) {
-  const out = { load: null, probe: null };
+  const out = { load: null, probe: null, verdict: "FAIL" };
   try {
     const factory = await jiti.import(indexPath);
     const fn = factory?.default ?? factory;
@@ -45,13 +78,15 @@ async function smoke(name, indexPath, probeImport) {
     const registered = { providers: [], commands: [] };
     const api = {
       registerProvider: (id, cfg) => {
+        const checks = assertModelBaseUrls(id, cfg);
         registered.providers.push({
           id,
           api: cfg?.api,
           baseUrl: cfg?.baseUrl,
-          models: Array.isArray(cfg?.models) ? cfg.models.length : 0,
+          models: checks.modelCount,
           hasStreamSimple: typeof cfg?.streamSimple === "function",
           hasOauth: Boolean(cfg?.oauth),
+          allModelsHaveBaseUrl: true,
         });
       },
       registerCommand: (id) => {
@@ -59,6 +94,7 @@ async function smoke(name, indexPath, probeImport) {
       },
     };
     await fn(api);
+    if (!registered.providers.length) throw new Error("no providers registered");
     out.load = { ok: true, ...registered };
   } catch (e) {
     out.load = { ok: false, error: e instanceof Error ? e.message : String(e) };
@@ -72,7 +108,9 @@ async function smoke(name, indexPath, probeImport) {
   } else {
     out.probe = { ok: true, note: "thin-wrapper (no dedicated probe)" };
   }
+  out.verdict = out.load?.ok ? "PASS" : "FAIL";
   results.providers[name] = out;
+  console.log(`${out.verdict}\t${name}${out.load?.ok ? "" : `\t${out.load?.error}`}`);
 }
 
 const cursorProbe = async () => {
@@ -105,14 +143,10 @@ for (const id of thin) {
 }
 
 const exportDir = existsSync("/workspace/exports") ? "/workspace/exports" : join(ROOT, "tmp");
+mkdirSync(exportDir, { recursive: true });
 const outPath = join(exportDir, "pi-custom-providers-node-jiti-smoke.json");
-try {
-  writeFileSync(outPath, JSON.stringify(results, null, 2) + "\n");
-  console.log("wrote", outPath);
-} catch {
-  console.log("(could not write export file)");
-}
-console.log(JSON.stringify(results, null, 2));
+writeFileSync(outPath, JSON.stringify(results, null, 2) + "\n");
+console.log("wrote", outPath);
 
-const failed = Object.values(results.providers).some((p) => !p.load?.ok);
+const failed = Object.values(results.providers).some((p) => p.verdict !== "PASS");
 process.exit(failed ? 1 : 0);

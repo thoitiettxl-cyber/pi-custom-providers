@@ -37,6 +37,9 @@ function toProviderModels(models: AntigravityModelDef[]) {
 		cost: m.cost,
 		contextWindow: m.contextWindow,
 		maxTokens: m.maxTokens,
+		// Pi requires baseUrl on custom models; stamp provider default explicitly.
+		baseUrl: ANTIGRAVITY_API_URL,
+		api: ANTIGRAVITY_API_ID,
 	}));
 }
 

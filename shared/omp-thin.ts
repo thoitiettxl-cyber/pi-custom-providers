@@ -18,9 +18,10 @@ import type {
 } from "@earendil-works/pi-ai/compat";
 import { createAssistantMessageEventStream } from "@earendil-works/pi-ai/compat";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 export type ProviderModelDef = {
 	id: string;
@@ -145,21 +146,34 @@ export async function resolveOmpGetApiKey(
 }
 
 function resolveModelsJsonPath(): string {
+	/**
+	 * @oh-my-pi/pi-catalog only exposes ESM "import" conditions — createRequire
+	 * cannot resolve package.json / models.json via exports. Walk resolve.paths
+	 * and parents of this file so `pi install` git layouts (~/.pi/agent/git/...) work.
+	 */
+	const here = dirname(fileURLToPath(import.meta.url));
 	const require = createRequire(import.meta.url);
-	try {
-		const pkg = require.resolve("@oh-my-pi/pi-catalog/package.json");
-		return join(dirname(pkg), "src", "models.json");
-	} catch {
-		return join(
-			dirname(new URL(import.meta.url).pathname),
-			"..",
-			"node_modules",
-			"@oh-my-pi",
-			"pi-catalog",
-			"src",
-			"models.json",
-		);
+	const candidates: string[] = [];
+
+	for (const nodeModules of require.resolve.paths("@oh-my-pi/pi-catalog") ?? []) {
+		candidates.push(join(nodeModules, "@oh-my-pi", "pi-catalog", "src", "models.json"));
 	}
+
+	let dir = here;
+	for (let i = 0; i < 12; i++) {
+		candidates.push(join(dir, "node_modules", "@oh-my-pi", "pi-catalog", "src", "models.json"));
+		const parent = dirname(dir);
+		if (parent === dir) break;
+		dir = parent;
+	}
+
+	candidates.push(join(here, "..", "node_modules", "@oh-my-pi", "pi-catalog", "src", "models.json"));
+
+	for (const candidate of candidates) {
+		if (existsSync(candidate)) return candidate;
+	}
+
+	return candidates[0] ?? join(here, "..", "node_modules", "@oh-my-pi", "pi-catalog", "src", "models.json");
 }
 
 export function loadCatalogModels(
@@ -213,18 +227,38 @@ export function loadCatalogModels(
 	}
 }
 
-export function toProviderModels(models: ProviderModelDef[]) {
-	return models.map((m) => ({
-		id: m.id,
-		name: m.name,
-		reasoning: m.reasoning,
-		input: m.input,
-		cost: m.cost,
-		contextWindow: m.contextWindow,
-		maxTokens: m.maxTokens,
-		...(m.baseUrl ? { baseUrl: m.baseUrl } : {}),
-		...(m.api ? { api: m.api } : {}),
-	}));
+export type ProviderModelDefaults = {
+	baseUrl?: string;
+	api?: string;
+};
+
+/**
+ * Map catalog/fallback defs to Pi registerProvider models.
+ * Always stamp baseUrl (and api when known): Pi requires baseUrl on custom models
+ * when provider-level inheritance is missing (e.g. models.json merge edge cases).
+ * Prefer per-model catalog values when present (gitlab-duo has dual anthropic/openai URLs).
+ */
+export function toProviderModels(models: ProviderModelDef[], defaults?: ProviderModelDefaults) {
+	return models.map((m) => {
+		const baseUrl = (m.baseUrl && m.baseUrl.trim()) || defaults?.baseUrl;
+		const api = (m.api && m.api.trim()) || defaults?.api;
+		if (!baseUrl) {
+			throw new Error(
+				`toProviderModels: model "${m.id}" has no baseUrl; pass provider default baseUrl`,
+			);
+		}
+		return {
+			id: m.id,
+			name: m.name,
+			reasoning: m.reasoning,
+			input: m.input,
+			cost: m.cost,
+			contextWindow: m.contextWindow,
+			maxTokens: m.maxTokens,
+			baseUrl,
+			...(api ? { api } : {}),
+		};
+	});
 }
 
 function contentToText(content: unknown): string {
@@ -489,10 +523,14 @@ export async function registerThinOmpProvider(pi: ExtensionAPI, opts: ThinProvid
 		ompApiId: opts.ompApiId ?? opts.apiId,
 	});
 
+	if (!opts.baseUrl?.trim()) {
+		throw new Error(`registerThinOmpProvider(${opts.id}): baseUrl is required`);
+	}
+
 	pi.registerProvider(opts.id, {
 		baseUrl: opts.baseUrl,
 		api: opts.apiId,
-		models: toProviderModels(models),
+		models: toProviderModels(models, { baseUrl: opts.baseUrl, api: opts.apiId }),
 		oauth: {
 			name: opts.displayName,
 			login: oauth.login,

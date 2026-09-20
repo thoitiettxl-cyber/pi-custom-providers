@@ -28,6 +28,9 @@ function toProviderModels(models: DevinModelDef[]) {
 		cost: m.cost,
 		contextWindow: m.contextWindow,
 		maxTokens: m.maxTokens,
+		// Pi requires baseUrl on custom models; stamp provider default explicitly.
+		baseUrl: DEVIN_API_URL,
+		api: DEVIN_API_ID,
 	}));
 }
 

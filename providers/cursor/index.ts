@@ -33,6 +33,9 @@ function toProviderModels(models: CursorModelDef[]) {
 		cost: m.cost,
 		contextWindow: m.contextWindow,
 		maxTokens: m.maxTokens,
+		// Pi requires baseUrl on custom models; stamp provider default explicitly.
+		baseUrl: CURSOR_API_URL,
+		api: CURSOR_API_ID,
 	}));
 }
 

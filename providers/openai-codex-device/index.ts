@@ -25,6 +25,19 @@ export default async function openaiCodexDeviceExtension(pi: ExtensionAPI) {
 		ompProviderId: "openai-codex",
 		ompApiId: "openai-codex-responses",
 		infoCommand: "openai-codex-device-provider-info",
+		fallbackModels: [
+			{
+				id: "gpt-5.5",
+				name: "GPT-5.5",
+				reasoning: true,
+				input: ["text"],
+				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+				contextWindow: 272000,
+				maxTokens: 128000,
+				api: "openai-codex-responses",
+				baseUrl: "https://chatgpt.com/backend-api",
+			},
+		],
 		notes: [
 			"login: custom device/headless hook (omp openai-codex-device)",
 			"models: same catalog as openai-codex; credentials live under this provider id in Pi auth.json",

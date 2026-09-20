@@ -21,6 +21,19 @@ export default async function gitlabDuoExtension(pi: ExtensionAPI) {
 		streamLabel: "streamGitLabDuo",
 		loginHint: "/login gitlab-duo",
 		infoCommand: "gitlab-duo-provider-info",
+		fallbackModels: [
+			{
+				id: "claude-sonnet-4-5-20250929",
+				name: "Claude Sonnet 4.5",
+				reasoning: true,
+				input: ["text"],
+				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+				contextWindow: 200000,
+				maxTokens: 64000,
+				api: "anthropic-messages",
+				baseUrl: "https://cloud.gitlab.com/ai/v1/proxy/anthropic/",
+			},
+		],
 		notes: [
 			"oauth: oauth-code PKCE; optional GITLAB_CLIENT_ID / GITLAB_REDIRECT_URI / GITLAB_TOKEN",
 			"earendil example exists but is not a bundled first-party OAuth provider — this tracks omp",

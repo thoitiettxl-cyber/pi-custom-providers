@@ -1133,6 +1133,8 @@ function registerProviderWithModels(pi: ExtensionAPI, models: CatalogModel[]): v
 			cost,
 			contextWindow,
 			maxTokens,
+			baseUrl: PRIMARY_ENDPOINT,
+			api: "google-antigravity-cca",
 		})),
 		oauth: {
 			name: PROVIDER_NAME,

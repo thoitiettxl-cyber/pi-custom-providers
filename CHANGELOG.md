@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Fixed
+- **baseUrl on custom models:** `toProviderModels` / `registerThinOmpProvider` always stamp provider default `baseUrl` (and `api`) onto every model when the catalog entry omits them — fixes Pi `validateExtensionProvider` error `"baseUrl" is required when defining custom models` (seen on `gitlab-duo` after empty/partial catalog).
+- **Catalog resolve after `pi install`:** `resolveModelsJsonPath` no longer uses export-fragile `require.resolve(.../package.json)`; walks `require.resolve.paths` + parent `node_modules` so git install layouts under `~/.pi/agent/git/...` find `@oh-my-pi/pi-catalog`.
+- Hybrid providers (`cursor`, `devin`, `gemini-antigravity` + CCA native) now set per-model `baseUrl`/`api` explicitly.
+- Thin providers ship `fallbackModels` with `baseUrl` when the omp catalog bucket is empty.
+- Smoke (`scripts/smoke-node-jiti.mjs`) calls earendil `validateExtensionProvider` and asserts every model has `baseUrl`.
+
+### Notes / residual risk
+- If `~/.pi/agent/models.json` defines the same provider with custom `models` and no `baseUrl`, Pi's `applyModelsJson` still throws **before** extension defaults apply — add `baseUrl` there or remove the block.
+
+
 ### Added
 - Thin omp OAuth wrappers: `google-gemini-cli`, `gitlab-duo`, `gitlab-duo-agent`, `openai-codex-device`, `muse-code`, `zai-coding-plan` (`shared/omp-thin.ts`).
 - `@oh-my-pi/pi-ai` + `pi-catalog` moved to **dependencies** with caret `^18.2.6`.

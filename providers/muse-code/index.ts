@@ -21,6 +21,19 @@ export default async function museCodeExtension(pi: ExtensionAPI) {
 		streamLabel: "streamOpenAIResponses",
 		loginHint: "/login muse-code",
 		infoCommand: "muse-code-provider-info",
+		fallbackModels: [
+			{
+				id: "muse-spark-1.1",
+				name: "Muse Spark 1.1",
+				reasoning: true,
+				input: ["text"],
+				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+				contextWindow: 128000,
+				maxTokens: 16384,
+				api: "openai-responses",
+				baseUrl: "https://api.meta.ai/v1",
+			},
+		],
 		notes: [
 			"oauth: device-code + after-exchange muse-code-key mint",
 			"stream via omp streamOpenAIResponses with muse-code provider transport",

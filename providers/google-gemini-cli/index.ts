@@ -22,6 +22,19 @@ export default async function googleGeminiCliExtension(pi: ExtensionAPI) {
 		streamLabel: "streamGoogleGeminiCli",
 		loginHint: "/login google-gemini-cli",
 		infoCommand: "google-gemini-cli-provider-info",
+		fallbackModels: [
+			{
+				id: "gemini-2.5-pro",
+				name: "Gemini 2.5 Pro",
+				reasoning: true,
+				input: ["text"],
+				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+				contextWindow: 1048576,
+				maxTokens: 65536,
+				api: "google-gemini-cli",
+				baseUrl: "https://cloudcode-pa.googleapis.com",
+			},
+		],
 		notes: [
 			"oauth: oauth-code PKCE + project provision hook (omp google-gemini-cli-project)",
 			"distinct from google-antigravity (different OAuth client / model set)",
