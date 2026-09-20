@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Thin omp OAuth wrappers: `google-gemini-cli`, `gitlab-duo`, `gitlab-duo-agent`, `openai-codex-device`, `muse-code`, `zai-coding-plan` (`shared/omp-thin.ts`).
+- `@oh-my-pi/pi-ai` + `pi-catalog` moved to **dependencies** with caret `^18.2.6`.
+- `.github/dependabot.yml` for `@oh-my-pi/*`; `scripts/sync-omp-version.mjs`.
+- README “Staying current with omp”; `docs/SKIPPED-PROVIDERS.md`.
+
+### TypeSafe
+- `dependabot_omp_deps` + `thin_omp_reexport` + `missing_minus_pi_builtins` (jev-1.13.0).
+
 ## 0.86.1 — 2026-09-20
 
 ### Added

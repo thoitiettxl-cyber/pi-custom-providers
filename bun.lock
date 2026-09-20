@@ -4,15 +4,16 @@
   "workspaces": {
     "": {
       "name": "pi-custom-providers",
+      "dependencies": {
+        "@oh-my-pi/pi-ai": "^18.2.6",
+        "@oh-my-pi/pi-catalog": "^18.2.6",
+      },
       "devDependencies": {
         "@earendil-works/pi-ai": "0.86.1",
         "@earendil-works/pi-coding-agent": "0.86.1",
         "@types/node": "22.13.10",
+        "jiti": "^2.7.0",
         "typescript": "5.9.2",
-      },
-      "optionalDependencies": {
-        "@oh-my-pi/pi-ai": "18.2.6",
-        "@oh-my-pi/pi-catalog": "18.2.6",
       },
       "peerDependencies": {
         "@earendil-works/pi-agent-core": "*",
@@ -21,6 +22,13 @@
         "@earendil-works/pi-tui": "*",
         "typebox": "*",
       },
+      "optionalPeers": [
+        "@earendil-works/pi-agent-core",
+        "@earendil-works/pi-ai",
+        "@earendil-works/pi-coding-agent",
+        "@earendil-works/pi-tui",
+        "typebox",
+      ],
     },
     "providers/cursor": {
       "name": "pi-extension-custom-provider-cursor",
@@ -31,14 +39,14 @@
         "@types/node": "22.13.10",
         "typescript": "5.9.2",
       },
-      "optionalDependencies": {
-        "@oh-my-pi/pi-ai": "18.2.6",
-        "@oh-my-pi/pi-catalog": "18.2.6",
-      },
       "peerDependencies": {
         "@earendil-works/pi-ai": "*",
         "@earendil-works/pi-coding-agent": "*",
       },
+      "optionalPeers": [
+        "@earendil-works/pi-ai",
+        "@earendil-works/pi-coding-agent",
+      ],
     },
     "providers/devin": {
       "name": "pi-extension-custom-provider-devin",
@@ -49,14 +57,14 @@
         "@types/node": "22.13.10",
         "typescript": "5.9.2",
       },
-      "optionalDependencies": {
-        "@oh-my-pi/pi-ai": "18.2.6",
-        "@oh-my-pi/pi-catalog": "18.2.6",
-      },
       "peerDependencies": {
         "@earendil-works/pi-ai": "*",
         "@earendil-works/pi-coding-agent": "*",
       },
+      "optionalPeers": [
+        "@earendil-works/pi-ai",
+        "@earendil-works/pi-coding-agent",
+      ],
     },
     "providers/gemini-antigravity": {
       "name": "pi-extension-custom-provider-gemini-antigravity",
@@ -67,14 +75,122 @@
         "@types/node": "22.13.10",
         "typescript": "5.9.2",
       },
-      "optionalDependencies": {
-        "@oh-my-pi/pi-ai": "18.2.6",
-        "@oh-my-pi/pi-catalog": "18.2.6",
+      "peerDependencies": {
+        "@earendil-works/pi-ai": "*",
+        "@earendil-works/pi-coding-agent": "*",
+      },
+      "optionalPeers": [
+        "@earendil-works/pi-ai",
+        "@earendil-works/pi-coding-agent",
+      ],
+    },
+    "providers/gitlab-duo": {
+      "name": "pi-extension-custom-provider-gitlab-duo",
+      "version": "0.86.1",
+      "devDependencies": {
+        "@earendil-works/pi-ai": "0.86.1",
+        "@earendil-works/pi-coding-agent": "0.86.1",
+        "@types/node": "22.13.10",
+        "typescript": "5.9.2",
       },
       "peerDependencies": {
         "@earendil-works/pi-ai": "*",
         "@earendil-works/pi-coding-agent": "*",
       },
+      "optionalPeers": [
+        "@earendil-works/pi-ai",
+        "@earendil-works/pi-coding-agent",
+      ],
+    },
+    "providers/gitlab-duo-agent": {
+      "name": "pi-extension-custom-provider-gitlab-duo-agent",
+      "version": "0.86.1",
+      "devDependencies": {
+        "@earendil-works/pi-ai": "0.86.1",
+        "@earendil-works/pi-coding-agent": "0.86.1",
+        "@types/node": "22.13.10",
+        "typescript": "5.9.2",
+      },
+      "peerDependencies": {
+        "@earendil-works/pi-ai": "*",
+        "@earendil-works/pi-coding-agent": "*",
+      },
+      "optionalPeers": [
+        "@earendil-works/pi-ai",
+        "@earendil-works/pi-coding-agent",
+      ],
+    },
+    "providers/google-gemini-cli": {
+      "name": "pi-extension-custom-provider-google-gemini-cli",
+      "version": "0.86.1",
+      "devDependencies": {
+        "@earendil-works/pi-ai": "0.86.1",
+        "@earendil-works/pi-coding-agent": "0.86.1",
+        "@types/node": "22.13.10",
+        "typescript": "5.9.2",
+      },
+      "peerDependencies": {
+        "@earendil-works/pi-ai": "*",
+        "@earendil-works/pi-coding-agent": "*",
+      },
+      "optionalPeers": [
+        "@earendil-works/pi-ai",
+        "@earendil-works/pi-coding-agent",
+      ],
+    },
+    "providers/muse-code": {
+      "name": "pi-extension-custom-provider-muse-code",
+      "version": "0.86.1",
+      "devDependencies": {
+        "@earendil-works/pi-ai": "0.86.1",
+        "@earendil-works/pi-coding-agent": "0.86.1",
+        "@types/node": "22.13.10",
+        "typescript": "5.9.2",
+      },
+      "peerDependencies": {
+        "@earendil-works/pi-ai": "*",
+        "@earendil-works/pi-coding-agent": "*",
+      },
+      "optionalPeers": [
+        "@earendil-works/pi-ai",
+        "@earendil-works/pi-coding-agent",
+      ],
+    },
+    "providers/openai-codex-device": {
+      "name": "pi-extension-custom-provider-openai-codex-device",
+      "version": "0.86.1",
+      "devDependencies": {
+        "@earendil-works/pi-ai": "0.86.1",
+        "@earendil-works/pi-coding-agent": "0.86.1",
+        "@types/node": "22.13.10",
+        "typescript": "5.9.2",
+      },
+      "peerDependencies": {
+        "@earendil-works/pi-ai": "*",
+        "@earendil-works/pi-coding-agent": "*",
+      },
+      "optionalPeers": [
+        "@earendil-works/pi-ai",
+        "@earendil-works/pi-coding-agent",
+      ],
+    },
+    "providers/zai-coding-plan": {
+      "name": "pi-extension-custom-provider-zai-coding-plan",
+      "version": "0.86.1",
+      "devDependencies": {
+        "@earendil-works/pi-ai": "0.86.1",
+        "@earendil-works/pi-coding-agent": "0.86.1",
+        "@types/node": "22.13.10",
+        "typescript": "5.9.2",
+      },
+      "peerDependencies": {
+        "@earendil-works/pi-ai": "*",
+        "@earendil-works/pi-coding-agent": "*",
+      },
+      "optionalPeers": [
+        "@earendil-works/pi-ai",
+        "@earendil-works/pi-coding-agent",
+      ],
     },
   },
   "packages": {
@@ -347,6 +463,18 @@
     "pi-extension-custom-provider-devin": ["pi-extension-custom-provider-devin@workspace:providers/devin"],
 
     "pi-extension-custom-provider-gemini-antigravity": ["pi-extension-custom-provider-gemini-antigravity@workspace:providers/gemini-antigravity"],
+
+    "pi-extension-custom-provider-gitlab-duo": ["pi-extension-custom-provider-gitlab-duo@workspace:providers/gitlab-duo"],
+
+    "pi-extension-custom-provider-gitlab-duo-agent": ["pi-extension-custom-provider-gitlab-duo-agent@workspace:providers/gitlab-duo-agent"],
+
+    "pi-extension-custom-provider-google-gemini-cli": ["pi-extension-custom-provider-google-gemini-cli@workspace:providers/google-gemini-cli"],
+
+    "pi-extension-custom-provider-muse-code": ["pi-extension-custom-provider-muse-code@workspace:providers/muse-code"],
+
+    "pi-extension-custom-provider-openai-codex-device": ["pi-extension-custom-provider-openai-codex-device@workspace:providers/openai-codex-device"],
+
+    "pi-extension-custom-provider-zai-coding-plan": ["pi-extension-custom-provider-zai-coding-plan@workspace:providers/zai-coding-plan"],
 
     "proper-lockfile": ["proper-lockfile@4.1.2", "", { "dependencies": { "graceful-fs": "^4.2.4", "retry": "^0.12.0", "signal-exit": "^3.0.2" } }, "sha512-TjNPblN4BwAWMXU8s9AEz4JmQxnD1NNL7bNOY/AKUzyamc379FWASUhc/K1pL2noVb+XmZKLL68cjzLsiOAMaA=="],
 

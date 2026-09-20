@@ -1,0 +1,26 @@
+# Keep @oh-my-pi/* current so thin wrappers pick up provider fixes without re-ports.
+# After merge to main, users on an unpinned git install run:
+#   pi update --extensions
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Ho_Chi_Minh
+    open-pull-requests-limit: 5
+    allow:
+      - dependency-name: "@oh-my-pi/pi-ai"
+      - dependency-name: "@oh-my-pi/pi-catalog"
+    groups:
+      oh-my-pi:
+        patterns:
+          - "@oh-my-pi/*"
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+    labels:
+      - dependencies
+      - omp

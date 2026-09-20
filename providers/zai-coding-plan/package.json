@@ -1,19 +1,17 @@
 {
-  "name": "pi-extension-custom-provider-gemini-antigravity",
+  "name": "pi-extension-custom-provider-zai-coding-plan",
   "private": true,
   "version": "0.86.1",
   "type": "module",
-  "description": "Google Antigravity OAuth + Node-native CCA SSE stream for earendil/pi 0.86.1 (no Bun/@oh-my-pi stream runtime)",
+  "description": "Thin omp wrapper: Z.AI coding-plan OAuth + anthropic stream for earendil/Pi",
   "scripts": {
     "clean": "echo 'nothing to clean'",
     "build": "echo 'nothing to build'",
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "bun test ./oauth.test.ts ./schema-sanitize.test.ts"
+    "test": "node -e \"console.log('thin wrapper: load smoke via root smoke:node')\""
   },
   "pi": {
-    "extensions": [
-      "./index.ts"
-    ]
+    "extensions": ["./index.ts"]
   },
   "devDependencies": {
     "@types/node": "22.13.10",
@@ -26,11 +24,7 @@
     "@earendil-works/pi-coding-agent": "*"
   },
   "peerDependenciesMeta": {
-    "@earendil-works/pi-ai": {
-      "optional": true
-    },
-    "@earendil-works/pi-coding-agent": {
-      "optional": true
-    }
+    "@earendil-works/pi-ai": { "optional": true },
+    "@earendil-works/pi-coding-agent": { "optional": true }
   }
 }

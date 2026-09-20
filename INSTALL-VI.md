@@ -39,3 +39,18 @@ bun run smoke:node
 ```
 
 Chi tiết tiếng Anh: [README.md](./README.md) · Kiến trúc: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
+
+
+## Cập nhật theo omp
+
+Cài git **không pin commit**:
+
+```bash
+PI_SKIP_VERSION_CHECK=1 pi install git:github.com/thoitiettxl-cyber/pi-custom-providers
+```
+
+Khi omp sửa provider (Dependabot merge trên repo này), chỉ cần:
+
+```bash
+pi update --extensions
+```

@@ -21,10 +21,6 @@
     "@earendil-works/pi-ai": "0.86.1",
     "@earendil-works/pi-coding-agent": "0.86.1"
   },
-  "optionalDependencies": {
-    "@oh-my-pi/pi-ai": "18.2.6",
-    "@oh-my-pi/pi-catalog": "18.2.6"
-  },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
     "@earendil-works/pi-coding-agent": "*"

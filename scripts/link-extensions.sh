@@ -13,15 +13,9 @@ link_one() {
   echo "linked $EXT/$name -> $src"
 }
 
-link_one cursor "$ROOT/providers/cursor"
-link_one devin "$ROOT/providers/devin"
-link_one gemini-antigravity "$ROOT/providers/gemini-antigravity"
-
-# Convenience standalone paths expected by runbooks (best-effort)
-if [[ -d /workspace ]]; then
-  ln -sfn "$ROOT/providers/cursor" /workspace/pi-cursor-extension 2>/dev/null || true
-  ln -sfn "$ROOT/providers/devin" /workspace/pi-devin-extension 2>/dev/null || true
-  echo "linked /workspace/pi-cursor-extension and /workspace/pi-devin-extension (if permitted)"
-fi
+for name in cursor devin gemini-antigravity google-gemini-cli gitlab-duo gitlab-duo-agent openai-codex-device muse-code zai-coding-plan; do
+  link_one "$name" "$ROOT/providers/$name"
+done
 
 echo "Note: primary install path is: PI_SKIP_VERSION_CHECK=1 pi install \"$ROOT\""
+echo "Keep git install unpinned (no @commit) so: pi update --extensions"

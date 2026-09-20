@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Node+jiti smoke: load each provider extension factory (registration path)
- * and run stream import probes. Never prints secrets.
+ * Node+jiti smoke: load each provider extension factory (registration path).
+ * Never prints secrets.
  */
 import { createRequire } from "node:module";
-import { writeFileSync, existsSync } from "node:fs";
+import { writeFileSync, existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -63,10 +63,14 @@ async function smoke(name, indexPath, probeImport) {
   } catch (e) {
     out.load = { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
-  try {
-    out.probe = await probeImport();
-  } catch (e) {
-    out.probe = { ok: false, error: e instanceof Error ? e.message : String(e) };
+  if (probeImport) {
+    try {
+      out.probe = await probeImport();
+    } catch (e) {
+      out.probe = { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
+  } else {
+    out.probe = { ok: true, note: "thin-wrapper (no dedicated probe)" };
   }
   results.providers[name] = out;
 }
@@ -86,11 +90,19 @@ const antiProbe = async () => {
 
 await smoke("cursor", join(ROOT, "providers/cursor/index.ts"), cursorProbe);
 await smoke("devin", join(ROOT, "providers/devin/index.ts"), devinProbe);
-await smoke(
-  "gemini-antigravity",
-  join(ROOT, "providers/gemini-antigravity/index.ts"),
-  antiProbe,
-);
+await smoke("gemini-antigravity", join(ROOT, "providers/gemini-antigravity/index.ts"), antiProbe);
+
+const thin = [
+  "google-gemini-cli",
+  "gitlab-duo",
+  "gitlab-duo-agent",
+  "openai-codex-device",
+  "muse-code",
+  "zai-coding-plan",
+];
+for (const id of thin) {
+  await smoke(id, join(ROOT, `providers/${id}/index.ts`), null);
+}
 
 const exportDir = existsSync("/workspace/exports") ? "/workspace/exports" : join(ROOT, "tmp");
 const outPath = join(exportDir, "pi-custom-providers-node-jiti-smoke.json");

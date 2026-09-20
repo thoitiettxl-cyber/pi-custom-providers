@@ -1,0 +1,40 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "update_strategy": {
+      "type": "choice",
+      "choice": "dependabot_omp_deps",
+      "confidence": 1.0,
+      "probabilities": {
+        "dependabot_omp_deps": 1.0,
+        "floating_star_deps": 0.0,
+        "vendor_sync_script_only": 0.0,
+        "git_submodule_omp": 0.0
+      }
+    },
+    "wrapper_style": {
+      "type": "choice",
+      "choice": "thin_omp_reexport",
+      "confidence": 1.0,
+      "probabilities": {
+        "hybrid_shim_per_provider": 0.0,
+        "full_native_port_all": 0.0,
+        "thin_omp_reexport": 1.0
+      }
+    },
+    "scope_add": {
+      "type": "choice",
+      "choice": "missing_minus_pi_builtins",
+      "confidence": 1.0,
+      "probabilities": {
+        "oauth_custom_hooks_only": 0.0,
+        "missing_minus_pi_builtins": 1.0,
+        "all_missing_oauth": 0.0
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 1653,
+    "output_tokens": 176
+  }
+}

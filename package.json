@@ -1,17 +1,23 @@
 {
   "name": "pi-custom-providers",
   "version": "0.86.1",
-  "description": "Pi 0.86 custom chat providers (cursor, devin, gemini-antigravity) — one package, pi install",
+  "description": "Pi 0.86 custom chat providers (omp OAuth browser wrappers + cursor/devin/antigravity) — tracks @oh-my-pi via Dependabot",
   "type": "module",
   "keywords": [
-    "pi-package",
-    "pi",
-    "earendil",
+    "antigravity",
     "cursor",
     "devin",
+    "earendil",
     "gemini",
-    "antigravity",
-    "oauth"
+    "gitlab-duo",
+    "google-gemini-cli",
+    "muse-code",
+    "oauth",
+    "omp",
+    "openai-codex-device",
+    "pi",
+    "pi-package",
+    "zai"
   ],
   "license": "MIT",
   "repository": {
@@ -25,7 +31,13 @@
   "workspaces": [
     "providers/cursor",
     "providers/devin",
-    "providers/gemini-antigravity"
+    "providers/gemini-antigravity",
+    "providers/google-gemini-cli",
+    "providers/gitlab-duo",
+    "providers/gitlab-duo-agent",
+    "providers/openai-codex-device",
+    "providers/muse-code",
+    "providers/zai-coding-plan"
   ],
   "files": [
     "providers/**/*.ts",
@@ -46,7 +58,13 @@
     "extensions": [
       "./providers/cursor",
       "./providers/devin",
-      "./providers/gemini-antigravity"
+      "./providers/gemini-antigravity",
+      "./providers/google-gemini-cli",
+      "./providers/gitlab-duo",
+      "./providers/gitlab-duo-agent",
+      "./providers/openai-codex-device",
+      "./providers/muse-code",
+      "./providers/zai-coding-plan"
     ]
   },
   "scripts": {
@@ -57,7 +75,8 @@
     "test:antigravity": "bun run --filter pi-extension-custom-provider-gemini-antigravity test",
     "link:extensions": "bash scripts/link-extensions.sh",
     "smoke:node": "node scripts/smoke-node-jiti.mjs",
-    "smoke:pong": "node scripts/smoke-stream-pong.mjs"
+    "smoke:pong": "node scripts/smoke-stream-pong.mjs",
+    "sync:omp": "node scripts/sync-omp-version.mjs"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
@@ -70,11 +89,8 @@
     "@earendil-works/pi-ai": "0.86.1",
     "@earendil-works/pi-coding-agent": "0.86.1",
     "@types/node": "22.13.10",
+    "jiti": "^2.7.0",
     "typescript": "5.9.2"
-  },
-  "optionalDependencies": {
-    "@oh-my-pi/pi-ai": "18.2.6",
-    "@oh-my-pi/pi-catalog": "18.2.6"
   },
   "engines": {
     "node": ">=20"
@@ -95,5 +111,9 @@
     "typebox": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "@oh-my-pi/pi-ai": "^18.2.6",
+    "@oh-my-pi/pi-catalog": "^18.2.6"
   }
 }

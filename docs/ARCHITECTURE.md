@@ -2,37 +2,44 @@
 
 ## Purpose
 
-Ship three custom chat providers for earendil/Pi 0.86.x as **one installable package**:
+Ship custom chat providers for earendil/Pi 0.86.x as **one installable package**, tracking omp via thin wrappers + Dependabot.
 
-| Provider id | Folder | Stream engine |
-|-------------|--------|---------------|
-| `cursor` | `providers/cursor` | Hybrid: bun-shim + optional `@oh-my-pi` `streamCursor` (Node Connect TBD) |
-| `devin` | `providers/devin` | Hybrid: bun-shim + optional `@oh-my-pi` `streamDevin` (Node Connect TBD) |
-| `google-antigravity` | `providers/gemini-antigravity` | Node-native CCA SSE (`cca-native.ts`) |
+| Provider id | Folder | Style |
+|-------------|--------|-------|
+| `cursor` | `providers/cursor` | Hybrid bun-shim + omp `streamCursor` |
+| `devin` | `providers/devin` | Hybrid bun-shim + omp `streamDevin` |
+| `google-antigravity` | `providers/gemini-antigravity` | Node-native CCA SSE |
+| `google-gemini-cli` | `providers/google-gemini-cli` | Thin omp |
+| `gitlab-duo` | `providers/gitlab-duo` | Thin omp |
+| `gitlab-duo-agent` | `providers/gitlab-duo-agent` | Thin omp |
+| `openai-codex-device` | `providers/openai-codex-device` | Thin omp |
+| `muse-code` | `providers/muse-code` | Thin omp |
+| `zai-coding-plan` | `providers/zai-coding-plan` | Thin omp |
 
-## Workspace layout
+## TypeSafe (2026-09-20)
 
-```
-pi-custom-providers/
-  package.json          # pi.extensions + peerDeps + optional @oh-my-pi
-  providers/
-    cursor/             # index.ts export default
-    devin/
-    gemini-antigravity/
-  shared/               # shared helpers (e.g. bun-shim reference)
-  scripts/              # link + smoke
-  docs/
-```
+- `update_strategy=dependabot_omp_deps`
+- `wrapper_style=thin_omp_reexport`
+- `scope_add=missing_minus_pi_builtins`
 
-Bun/npm **workspaces** keep one lockfile and shared tooling. Nested provider `package.json` files remain for unit tests and nested `pi.extensions: ["./index.ts"]` discovery.
+## Thin wrappers
 
-## Peer-only core libs
+`shared/omp-thin.ts`:
 
-Pi bundles and **jiti-aliases** these modules into extensions. Declaring them in `dependencies` wastes disk and can shadow Pi’s copies.
+1. `getProviderDefinition(id)` from `@oh-my-pi/pi-ai/registry` → login / refresh / getApiKey
+2. Adapt earendil `OAuthLoginCallbacks` → omp controller
+3. `streamSimple` → literal dynamic import of omp stream export + event retarget
+4. Models from `@oh-my-pi/pi-catalog` `models.json`
 
-Use:
+Do **not** vendor full oauth/stream copies when omp exports the hooks.
+
+## Dependencies
 
 ```json
+"dependencies": {
+  "@oh-my-pi/pi-ai": "^18.2.6",
+  "@oh-my-pi/pi-catalog": "^18.2.6"
+},
 "peerDependencies": {
   "@earendil-works/pi-ai": "*",
   "@earendil-works/pi-agent-core": "*",
@@ -42,32 +49,8 @@ Use:
 }
 ```
 
-Local development may pin the same packages under `devDependencies` so `bun test` resolves types/runtime. `pi install` runs `npm install --omit=dev`, so those pins are **not** installed for end users.
+Caret + Dependabot ⇒ `pi update --extensions` on unpinned git install advances omp without manual re-ports.
 
-Third-party runtime (today: optional `@oh-my-pi/pi-ai` + `pi-catalog`) belongs in `optionalDependencies` / `dependencies`.
+## Bun vs Node
 
-## Discovery: `pi install` vs symlink
-
-### Primary — `pi install`
-
-1. User runs `pi install /path/to/pi-custom-providers` or `pi install git:github.com/thoitiettxl-cyber/pi-custom-providers`.
-2. Pi records the package in settings and (for git/npm) clones then `npm install --omit=dev`.
-3. Root `pi.extensions` lists provider **directories**. Pi expands each directory via smart discovery (`package.json` → `./index.ts` or bare `index.ts`).
-4. Each factory calls `pi.registerProvider(...)` + optional `/login` OAuth hooks.
-
-### Secondary — symlink (developers)
-
-`scripts/link-extensions.sh` symlinks each provider folder into `~/.pi/agent/extensions/<name>`. Useful for edit-reload loops without changing settings packages. Prefer `pi install .` for a clean, reproducible install.
-
-## Runtime notes
-
-- **Bun vs Node:** Published Pi uses Node+jiti. Cursor/Devin still import omp streams that assume Bun → `bun-shim.ts` installs a minimal `globalThis.Bun` before dynamic import. Antigravity avoids omp for streaming.
-- **Auth:** OAuth credentials live in Pi’s `auth.json` (never in this repo). Live stream smoke needs tokens; unit/load smoke does not.
-- **TypeSafe (2026-09-20):** `entry_layout=providers_dir_paths`, `peer_range=*`, `keep_workspaces=true`.
-
-## Extending
-
-1. Add `providers/<id>/` with `index.ts` default export.
-2. Append to root `workspaces` and `pi.extensions`.
-3. Document login command, API id, and stream engine.
-4. Run unit tests + `scripts/smoke-node-jiti.mjs`.
+Published Pi uses Node+jiti. Install `shared/bun-shim.ts` before omp imports. Some streams (e.g. gitlab-duo-agent WebSocket) may still prefer a real Bun host — document per provider README.
