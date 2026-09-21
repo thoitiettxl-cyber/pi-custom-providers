@@ -24,7 +24,7 @@ Khởi động lại Pi hoặc gõ `/reload`.
 /login xai-omp
 ```
 
-Provider thin omp (catalog đầy đủ Grok): `/login xai-omp` — không trùng Pi first-party `xai`.
+Provider thin omp (catalog SuperGrok OAuth-web ~9 model): `/login xai-omp` — không trùng Pi first-party `xai`, không gộp bucket API-key `xai`.
 
 Chọn model: `/model cursor/...`, `/model devin/...`, `/model google-antigravity/...`.
 

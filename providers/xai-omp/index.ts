@@ -1,5 +1,5 @@
 /**
- * Thin omp wrapper: xai-omp (full omp Grok catalog; does not collide with Pi first-party `xai`).
+ * Thin omp wrapper: xai-omp (SuperGrok OAuth-web catalog only; does not collide with Pi first-party `xai`).
  */
 import "../../shared/bun-shim.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -21,16 +21,16 @@ export default async function xaiOmpExtension(pi: ExtensionAPI) {
 		// Pi ProviderConfig has no storeCredentialsAs; /login xai-omp persists under "xai-omp".
 		// Hint documents omp auth bucket (SuperGrok OAuth) for users copying creds.
 		storeCredentialsAs: "xai-oauth",
-		displayName: "xAI Grok (omp catalog)",
+		displayName: "xAI Grok (SuperGrok OAuth)",
 		apiId: API,
 		baseUrl: BASE,
-		catalogId: "xai",
-		extraCatalogIds: ["xai-oauth"],
-		catalogLimit: 64,
+		catalogId: "xai-oauth",
+		catalogLimit: 16,
 		loadStreamFn: loadStream,
 		streamLabel: "streamOpenAIResponses",
 		loginHint: "/login xai-omp",
-		ompProviderId: "xai",
+		// openai-shared treats both xai and xai-oauth for SuperGrok stream shaping
+		ompProviderId: "xai-oauth",
 		ompApiId: API,
 		infoCommand: "xai-omp-provider-info",
 		fallbackModels: [
@@ -63,18 +63,7 @@ export default async function xaiOmpExtension(pi: ExtensionAPI) {
 				input: ["text", "image"],
 				cost: ZERO,
 				contextWindow: 1000000,
-				maxTokens: 30000,
-				api: API,
-				baseUrl: BASE,
-			},
-			{
-				id: "grok-code-fast-1",
-				name: "Grok Code Fast 1",
-				reasoning: true,
-				input: ["text"],
-				cost: ZERO,
-				contextWindow: 256000,
-				maxTokens: 10000,
+				maxTokens: 1000000,
 				api: API,
 				baseUrl: BASE,
 			},
@@ -84,16 +73,38 @@ export default async function xaiOmpExtension(pi: ExtensionAPI) {
 				reasoning: true,
 				input: ["text", "image"],
 				cost: ZERO,
-				contextWindow: 1000000,
-				maxTokens: 30000,
+				contextWindow: 2000000,
+				maxTokens: 2000000,
+				api: API,
+				baseUrl: BASE,
+			},
+			{
+				id: "grok-4.20-0309-non-reasoning",
+				name: "Grok 4.20 (Non-Reasoning)",
+				reasoning: false,
+				input: ["text", "image"],
+				cost: ZERO,
+				contextWindow: 2000000,
+				maxTokens: 2000000,
+				api: API,
+				baseUrl: BASE,
+			},
+			{
+				id: "grok-composer-2.5-fast",
+				name: "Grok Composer 2.5 Fast",
+				reasoning: false,
+				input: ["text"],
+				cost: ZERO,
+				contextWindow: 200000,
+				maxTokens: 200000,
 				api: API,
 				baseUrl: BASE,
 			},
 		],
 		notes: [
-			"supersedes thin Pi built-in `xai` catalog (~3 models) with full omp `xai`+`xai-oauth` union (~34)",
+			"SuperGrok OAuth-web catalog only (`xai-oauth`, ~9 models) — not the paid API-key `xai` bucket (~31)",
 			"does not collide with Pi first-party provider id `xai` — this registers as `xai-omp`",
-			"oauth hooks from omp `xai-oauth` (SuperGrok); Pi stores credentials under provider id `xai-omp`",
+			"oauth hooks from omp `xai-oauth` (SuperGrok web login); Pi stores credentials under provider id `xai-omp`",
 			"login: `/login xai-omp` OR copy existing Pi `xai` oauth entry to `xai-omp` in auth.json (never commit secrets)",
 			"update: Dependabot bumps @oh-my-pi/* → merge → pi update --extensions",
 		],

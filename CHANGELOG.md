@@ -13,8 +13,11 @@
 - If `~/.pi/agent/models.json` defines the same provider with custom `models` and no `baseUrl`, Pi's `applyModelsJson` still throws **before** extension defaults apply — add `baseUrl` there or remove the block.
 
 
+### Changed
+- **`xai-omp`:** OAuth-web catalog only — `catalogId: "xai-oauth"` (~9 SuperGrok picker models). Removed `extraCatalogIds: ["xai"]` (no paid API-key `xai` union ~31). `ompProviderId` set to `xai-oauth` for SuperGrok stream shaping. Fallback models limited to oauth catalog ids (dropped `grok-code-fast-1`).
+
 ### Added
-- **`xai-omp` thin provider:** full omp Grok catalog (`xai` ∪ `xai-oauth`, limit 64) via `registerThinOmpProvider`; provider id does not collide with Pi first-party `xai`. Login `/login xai-omp` (omp auth `xai-oauth`). `ThinProviderOptions` gains `extraCatalogIds`, `catalogLimit`, optional `storeCredentialsAs` (docs hint — Pi stores under provider id).
+- **`xai-omp` thin provider:** SuperGrok OAuth-web catalog (`xai-oauth` only) via `registerThinOmpProvider`; provider id does not collide with Pi first-party `xai`. Login `/login xai-omp` (omp auth `xai-oauth`). `ThinProviderOptions` gains `extraCatalogIds`, `catalogLimit`, optional `storeCredentialsAs` (docs hint — Pi stores under provider id).
 - Thin omp OAuth wrappers: `google-gemini-cli`, `gitlab-duo`, `gitlab-duo-agent`, `openai-codex-device`, `muse-code`, `zai-coding-plan` (`shared/omp-thin.ts`).
 - `@oh-my-pi/pi-ai` + `pi-catalog` moved to **dependencies** with caret `^18.2.6`.
 - `.github/dependabot.yml` for `@oh-my-pi/*`; `scripts/sync-omp-version.mjs`.

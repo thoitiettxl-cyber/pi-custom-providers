@@ -13,7 +13,7 @@ Custom chat providers for **earendil/Pi 0.86.x** in one installable package. Hyb
 | **Codex (device)** | `/login openai-codex-device` | Thin omp `streamOpenAICodexResponses` |
 | **Muse Code** | `/login muse-code` | Thin omp `streamOpenAIResponses` |
 | **Z.AI Coding Plan** | `/login zai-coding-plan` | Thin omp `streamAnthropic` |
-| **xAI Grok (omp)** | `/login xai-omp` | Thin omp `streamOpenAIResponses` (full catalog) |
+| **xAI Grok (SuperGrok OAuth)** | `/login xai-omp` | Thin omp `streamOpenAIResponses` (oauth-web ~9) |
 
 **Pi range:** 0.86.x (`peerDependencies: "*"`). **omp:** `@oh-my-pi/pi-ai` + `pi-catalog` in **`dependencies` with caret** (`^18.2.6`).
 
@@ -63,6 +63,7 @@ Thin wrappers call omp registry login + stream exports (`shared/omp-thin.ts`). H
 | `/login openai-codex-device` | Headless/device Codex (Pi also has browser `openai-codex`) |
 | `/login muse-code` | Meta device-code + minted API key |
 | `/login zai-coding-plan` | zcode:// / paste; mints Z.AI key |
+| `/login xai-omp` | SuperGrok OAuth-web; catalog `xai-oauth` only (~9), not API-key `xai` |
 
 ## Smoke
 
