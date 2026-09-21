@@ -27,7 +27,7 @@ Stream / Bun / omp-provider bugs → fix **here** (native adapter). Never patch 
 ## Hard invariants
 
 1. **No** `@oh-my-pi/pi-ai/providers` under `providers/**/*.ts`, `shared/native-*.ts`, or `shared/xai-oauth-native.ts` (enforced by `bun run check:boundary`).
-2. Every registered provider passes a **native** `streamSimple`. `loadStreamFn` without `streamSimple` hard-errors.
+2. Every registered provider passes a **native** `streamSimple`. The old `loadStreamFn` / `createOmpStreamSimple` path was removed.
 3. omp may appear only for: catalog `models.json`, OAuth login/refresh (unless `oauthFactory`), Connect protobuf codecs under `pi-catalog`.
 4. Peer-only `@earendil-works/pi-*` and `typebox`.
 5. Smoke on **Node + jiti** before ship (`smoke:node`; `smoke:pong` when creds exist).
@@ -53,7 +53,7 @@ Stream / Bun / omp-provider bugs → fix **here** (native adapter). Never patch 
 
 1. Optional `getProviderDefinition(id)` from `@oh-my-pi/pi-ai/registry` → login / refresh / getApiKey
 2. Adapt earendil `OAuthLoginCallbacks` → omp controller
-3. **`streamSimple` required** (native); bare `loadStreamFn` throws
+3. **`streamSimple` required** (native); missing `streamSimple` throws (`loadStreamFn` removed)
 4. Models from `@oh-my-pi/pi-catalog` `models.json` via fs
 
 **Exception — `xai-omp`:** auth uses `shared/xai-oauth-native.ts` via `oauthFactory`.

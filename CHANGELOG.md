@@ -6,7 +6,7 @@
 - **Bridge architecture enforcement (MyInjector-style layers):**
   - Canonical `docs/ARCHITECTURE.md` (Entry / Bridge / Adapter / Handler) + Continuity dual-authority
   - `scripts/check-bridge-boundary.mjs` + `bun run check:boundary` (also `pretest`)
-  - `registerThinOmpProvider` requires native `streamSimple`; bare `loadStreamFn` throws
+  - `registerThinOmpProvider` requires native `streamSimple` (omp stream path removed)
   - Plans: `docs/plans/active/01-ARCHITECTURE-bridge.md`, `02-EXECUTION-PLAN-bridge.md`; `docs/CONTINUITY-BOUNDARY.md`
 - **Remaining native streams (no omp stream fallback):**
   - `google-gemini-cli` → `gemini-cli-native.ts` (CCA fetch/SSE, GeminiCLI headers, `cloudcode-pa.googleapis.com`)
@@ -16,6 +16,9 @@
   - `devin` → `devin-native.ts` Connect HTTP/1.1 `GetChatMessage` + catalog protobuf
 - Removed unused `shared/native-unavailable-stream.ts`.
 - Docs: README provider table, INSTALL-VI, ARCHITECTURE, SKIPPED-PROVIDERS, AGENTS, per-provider READMEs.
+
+### Removed
+- Dead omp stream path in `shared/omp-thin.ts`: `loadStreamFn`, `createOmpStreamSimple`, and `ThinStreamConfig` (native `streamSimple` only).
 
 ### Notes
 - Live smoke: xai-omp + google-antigravity when auth present; cursor/devin skip live without auth but register + proto load must pass `smoke:node`.

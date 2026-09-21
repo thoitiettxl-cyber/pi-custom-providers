@@ -18,7 +18,7 @@ Repo: `pi-custom-providers`
    - Allowlist: none (codecs stay under `@oh-my-pi/pi-catalog`)
 - [x] 2. Wire `"check:boundary": "node scripts/check-bridge-boundary.mjs"` in `package.json`
 - [x] 3. Call it from `"test"` / `pretest`; document in AGENTS.md
-- [x] 4. In `shared/omp-thin.ts`: `loadStreamFn` without native `streamSimple` throws a clear error
+- [x] 4. In `shared/omp-thin.ts`: remove `loadStreamFn` / `createOmpStreamSimple`; missing native `streamSimple` throws
 
 ## Phase 2 — Docs alignment
 

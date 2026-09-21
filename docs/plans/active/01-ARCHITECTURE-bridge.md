@@ -43,7 +43,7 @@ Rule: a bug that only appears on `cursor`/`xai-omp` streams is a **providers** b
 ## Hard invariants
 
 1. **No** `import` / `importOmp("@oh-my-pi/pi-ai/providers/...")` under `providers/` or `shared/native-*.ts` or `providers/**/*-native.ts`.
-2. Every registered provider passes a **native** `streamSimple` (required). `loadStreamFn` is removed or hard-errors.
+2. Every registered provider passes a **native** `streamSimple` (required). `loadStreamFn` / `createOmpStreamSimple` are removed.
 3. omp may appear only for: catalog `models.json`, OAuth `getProviderDefinition` login/refresh (unless `oauthFactory`), Connect protobuf codecs.
 4. Peer-only `@earendil-works/pi-*` and `typebox`.
 5. Smoke on **Node + jiti** before ship (`smoke:node`, `smoke:pong` when creds exist).
@@ -78,5 +78,5 @@ Pi host (ExtensionAPI, auth.json, jiti)
 
 - Docs describe the four layers and Continuity boundary.
 - `bun run check:boundary` fails if any forbidden omp stream import appears.
-- `loadStreamFn` path cannot register a live stream (removed or throws).
+- `loadStreamFn` / `createOmpStreamSimple` dead path removed; missing `streamSimple` throws.
 - Existing smokes still pass; no provider behavior change intended beyond enforcement.
