@@ -7,7 +7,7 @@
  *   headers: GeminiCLI User-Agent + Client-Metadata (not Antigravity UA)
  *
  * Endpoints from omp: https://cloudcode-pa.googleapis.com
- * Do NOT import @oh-my-pi/pi-ai/providers/* for streaming.
+ * Do NOT import omp pi-ai provider stream modules for streaming.
  */
 import { randomUUID } from "node:crypto";
 import type {

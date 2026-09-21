@@ -1,7 +1,7 @@
 /**
  * Native Anthropic Messages API stream (fetch + SSE).
  * Used by zai-coding-plan and compatible Anthropic hosts.
- * Do NOT import @oh-my-pi/pi-ai/providers/* for streaming.
+ * Do NOT import omp pi-ai provider stream modules for streaming.
  */
 import type {
 	Api,

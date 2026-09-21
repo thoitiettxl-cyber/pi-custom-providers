@@ -3,6 +3,11 @@
 ## Unreleased
 
 ### Added
+- **Bridge architecture enforcement (MyInjector-style layers):**
+  - Canonical `docs/ARCHITECTURE.md` (Entry / Bridge / Adapter / Handler) + Continuity dual-authority
+  - `scripts/check-bridge-boundary.mjs` + `bun run check:boundary` (also `pretest`)
+  - `registerThinOmpProvider` requires native `streamSimple`; bare `loadStreamFn` throws
+  - Plans: `docs/plans/active/01-ARCHITECTURE-bridge.md`, `02-EXECUTION-PLAN-bridge.md`; `docs/CONTINUITY-BOUNDARY.md`
 - **Remaining native streams (no omp stream fallback):**
   - `google-gemini-cli` → `gemini-cli-native.ts` (CCA fetch/SSE, GeminiCLI headers, `cloudcode-pa.googleapis.com`)
   - `openai-codex-device` → `codex-native.ts` (Codex `/codex/responses` SSE + account-id/beta headers)

@@ -1,7 +1,8 @@
 /**
- * Thin bridge from earendil ExtensionAPI oauth/stream to @oh-my-pi/pi-ai.
- * Do not vendor omp oauth/stream implementations — import hooks so
- * `pi update --extensions` (after Dependabot bumps) picks up omp fixes.
+ * Adapter layer (MyInjector-style): catalog + optional omp OAuth only.
+ * Not a stream host — providers must pass native `streamSimple`.
+ * Do not vendor omp oauth/stream implementations — import OAuth/registry hooks so
+ * `pi update --extensions` (after Dependabot bumps) picks up omp OAuth/catalog fixes.
  */
 import { installBunShim } from "./bun-shim.ts";
 installBunShim();
@@ -598,11 +599,11 @@ export type ThinProviderOptions = {
 	/** Max models after merge (default 40; raise for large catalogs e.g. xai ~31). */
 	catalogLimit?: number;
 	/**
-	 * @deprecated Prefer native `streamSimple`. When set alone, still loads omp streams
-	 * (legacy). Ignored when `streamSimple` is provided.
+	 * @deprecated Removed as a live stream path. If set without `streamSimple`,
+	 * `registerThinOmpProvider` throws — use native `streamSimple` instead.
 	 */
 	loadStreamFn?: () => Promise<OmpStreamFn>;
-	/** Native (or other) streamSimple — preferred; no @oh-my-pi provider stream import. */
+	/** Required native streamSimple — Adapter must not host omp provider streams. */
 	streamSimple?: ThinStreamSimple;
 	streamLabel: string;
 	loginHint: string;
@@ -646,32 +647,22 @@ export async function registerThinOmpProvider(pi: ExtensionAPI, opts: ThinProvid
 	if (!opts.baseUrl?.trim()) {
 		throw new Error(`registerThinOmpProvider(${opts.id}): baseUrl is required`);
 	}
-	if (!opts.streamSimple && !opts.loadStreamFn) {
-		throw new Error(
-			`registerThinOmpProvider(${opts.id}): provide native streamSimple (preferred) or loadStreamFn`,
-		);
+	if (!opts.streamSimple) {
+		const hint = opts.loadStreamFn
+			? "loadStreamFn alone is no longer allowed — pass native streamSimple (shared/native-*.ts or provider *-native.ts)"
+			: "native streamSimple is required (shared/native-*.ts or provider *-native.ts)";
+		throw new Error(`registerThinOmpProvider(${opts.id}): ${hint}`);
 	}
 
-	const stream = opts.streamSimple
-		? {
-				streamSimple: opts.streamSimple,
-				probe: async () => ({
-					ok: true as const,
-					engine: opts.streamLabel,
-					runtime:
-						typeof (globalThis as { Bun?: unknown }).Bun !== "undefined" ? "bun-or-shim" : "node",
-				}),
-			}
-		: createOmpStreamSimple({
-				providerId: opts.id,
-				apiId: opts.apiId,
-				baseUrl: opts.baseUrl,
-				loadStreamFn: opts.loadStreamFn!,
-				streamLabel: opts.streamLabel,
-				loginHint: opts.loginHint,
-				ompProviderId: opts.ompProviderId ?? opts.id,
-				ompApiId: opts.ompApiId ?? opts.apiId,
-			});
+	const stream = {
+		streamSimple: opts.streamSimple,
+		probe: async () => ({
+			ok: true as const,
+			engine: opts.streamLabel,
+			runtime:
+				typeof (globalThis as { Bun?: unknown }).Bun !== "undefined" ? "bun-or-shim" : "node",
+		}),
+	};
 
 	pi.registerProvider(opts.id, {
 		baseUrl: opts.baseUrl,

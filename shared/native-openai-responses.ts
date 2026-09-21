@@ -1,7 +1,7 @@
 /**
  * Native OpenAI Responses API stream (fetch + SSE).
  * Earendil-compatible events via createAssistantMessageEventStream.
- * Do NOT use @oh-my-pi/pi-ai/providers/* for streaming.
+ * Do NOT use omp pi-ai provider stream modules for streaming.
  */
 import type {
 	Api,

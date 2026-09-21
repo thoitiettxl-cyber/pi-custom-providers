@@ -11,7 +11,7 @@
  *
  * Full WebSocket / compaction / attestation paths are deferred — this is the
  * viable native SSE subset used for chat turns.
- * Do NOT import @oh-my-pi/pi-ai/providers/* for streaming.
+ * Do NOT import omp pi-ai provider stream modules for streaming.
  */
 import type { Api, AssistantMessage, Model, SimpleStreamOptions } from "@earendil-works/pi-ai/compat";
 import { createAssistantMessageEventStream } from "@earendil-works/pi-ai/compat";

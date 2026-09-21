@@ -10,7 +10,7 @@
  *
  * Protobuf codecs: @oh-my-pi/pi-catalog/discovery/cursor-proto (+ protobuf).
  * Exec bridge: local exec-handlers.ts for read/ls/grep/write/delete/shell.
- * Do NOT import @oh-my-pi/pi-ai/providers/* for streaming.
+ * Do NOT import omp pi-ai provider stream modules for streaming.
  *
  * Scope: text/thinking deltas + turnEnded for simple prompts; basic exec
  * handoff when exec frames arrive. Full omp CursorExecHandlers / MCP / quota UI deferred.
