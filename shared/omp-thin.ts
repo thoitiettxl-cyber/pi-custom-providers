@@ -528,6 +528,13 @@ export function createOmpStreamSimple(cfg: ThinStreamConfig) {
 					apiKey,
 					signal: options?.signal,
 					headers: options?.headers,
+					// Continuity modelRegistry.complete passes these; drop them and omp
+					// routing/cache helpers may see undefined session identity.
+					maxTokens: options?.maxTokens,
+					temperature: options?.temperature,
+					cacheRetention: options?.cacheRetention,
+					sessionId: options?.sessionId,
+					reasoningEffort: (options as { reasoningEffort?: unknown } | undefined)?.reasoningEffort,
 				});
 				for await (const event of inner) {
 					const mapped = mapEvent(model, event as AssistantMessageEvent);

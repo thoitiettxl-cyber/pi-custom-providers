@@ -161,9 +161,14 @@ function installImportMetaDirPolyfill(): void {
 						return { format: "module", source: "export default \"\";", shortCircuit: true };
 					}
 				}
-				// Only rewrite jiti data: modules for import.meta.dir/path. Native file
-				// modules use import.meta.dirname on Node 22+.
-				if (!url.startsWith("data:")) {
+				// Rewrite Bun-only import.meta.dir/path for:
+				// - jiti data: modules (dirname/filename absent; __dirname may exist)
+				// - @oh-my-pi file: modules under Node (has dirname, not dir)
+				const isData = url.startsWith("data:");
+				const isOmpFile =
+					url.startsWith("file:") &&
+					(/node_modules\/@oh-my-pi\//.test(url) || /node_modules\/\.bun\/@oh-my-pi\+/.test(url));
+				if (!isData && !isOmpFile) {
 					return nextLoad(url, context);
 				}
 				const result = nextLoad(url, context);
