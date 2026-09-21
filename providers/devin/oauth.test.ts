@@ -85,11 +85,10 @@ describe("devin provider constants", () => {
 });
 
 describe("streamDevin import", () => {
-	it("reports native-unavailable (omp stream fallback disabled)", async () => {
+	it("loads native Connect module + catalog proto", async () => {
 		const { probeStreamDevinImport } = await import("./stream.ts");
 		const probe = await probeStreamDevinImport();
-		assert.equal(probe.ok, false);
+		assert.equal(probe.ok, true, probe.error);
 		assert.ok(probe.engine?.includes("native"));
-		assert.ok(probe.error?.includes("omp") || probe.error?.includes("native"));
 	});
 });

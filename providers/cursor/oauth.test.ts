@@ -46,11 +46,10 @@ describe("cursor provider constants", () => {
 });
 
 describe("streamCursor import", () => {
-	it("reports native-unavailable (omp stream fallback disabled)", async () => {
+	it("loads native Connect/HTTP2 module + catalog proto", async () => {
 		const { probeStreamCursorImport } = await import("./stream.ts");
 		const probe = await probeStreamCursorImport();
-		assert.equal(probe.ok, false);
+		assert.equal(probe.ok, true, probe.error);
 		assert.ok(probe.engine?.includes("native"));
-		assert.ok(probe.error?.includes("omp") || probe.error?.includes("native"));
 	});
 });

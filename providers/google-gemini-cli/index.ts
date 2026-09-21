@@ -1,13 +1,18 @@
 /**
- * google-gemini-cli: omp OAuth login + explicit native-unavailable stream (no omp stream fallback).
+ * google-gemini-cli: omp OAuth login + native CCA fetch/SSE stream (no omp stream).
  */
 import "../../shared/bun-shim.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerThinOmpProvider } from "../../shared/omp-thin.ts";
-import { createNativeUnavailableStreamSimple } from "../../shared/native-unavailable-stream.ts";
+import {
+	createNativeGeminiCliStreamSimple,
+	GEMINI_CLI_DEFAULT_ENDPOINT,
+	GEMINI_CLI_API_ID,
+	GEMINI_CLI_NATIVE_ENGINE,
+} from "./gemini-cli-native.ts";
 
-const BASE = "https://cloudcode-pa.googleapis.com";
-const API = "google-gemini-cli";
+const BASE = GEMINI_CLI_DEFAULT_ENDPOINT;
+const API = GEMINI_CLI_API_ID;
 
 export default async function extension(pi: ExtensionAPI) {
 	await registerThinOmpProvider(pi, {
@@ -16,12 +21,11 @@ export default async function extension(pi: ExtensionAPI) {
 		apiId: API,
 		baseUrl: BASE,
 		catalogId: "google-gemini-cli",
-		streamSimple: createNativeUnavailableStreamSimple({
-			providerId: "google-gemini-cli",
-			reason: "Cloud Code Assist Connect/CCA port still pending (use google-antigravity for native CCA)",
+		streamSimple: createNativeGeminiCliStreamSimple({
 			loginHint: "/login google-gemini-cli",
+			defaultBaseUrl: BASE,
 		}),
-		streamLabel: "native-unavailable-no-omp-fallback",
+		streamLabel: GEMINI_CLI_NATIVE_ENGINE,
 		loginHint: "/login google-gemini-cli",
 		infoCommand: "google-gemini-cli-provider-info",
 		fallbackModels: [
@@ -39,8 +43,8 @@ export default async function extension(pi: ExtensionAPI) {
 		],
 		notes: [
 			"oauth: omp login hooks (catalog/auth only)",
-			"stream: native unavailable — omp stream fallback disabled by policy",
-			"Cloud Code Assist Connect/CCA port still pending (use google-antigravity for native CCA)",
+			`stream: native CCA fetch/SSE (${GEMINI_CLI_NATIVE_ENGINE})`,
+			"wire: cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse (Gemini CLI headers)",
 		],
 	});
 }

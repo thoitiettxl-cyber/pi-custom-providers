@@ -2,58 +2,50 @@
 
 ## Purpose
 
-Ship custom chat providers for earendil/Pi 0.86.x as **one installable package**, tracking omp via thin wrappers + Dependabot.
+Ship custom chat providers for earendil/Pi 0.86.x as **one installable package**. Streams are **native** (no `@oh-my-pi/pi-ai/providers/*` stream imports). omp supplies catalog `models.json` + OAuth login hooks where not replaced by local oauth.
 
-| Provider id | Folder | Style |
-|-------------|--------|-------|
-| `cursor` | `providers/cursor` | Hybrid bun-shim + omp `streamCursor` |
-| `devin` | `providers/devin` | Hybrid bun-shim + omp `streamDevin` |
-| `google-antigravity` | `providers/gemini-antigravity` | Node-native CCA SSE |
-| `google-gemini-cli` | `providers/google-gemini-cli` | Thin omp |
-| `gitlab-duo` | `providers/gitlab-duo` | Thin omp |
-| `gitlab-duo-agent` | `providers/gitlab-duo-agent` | Thin omp |
-| `openai-codex-device` | `providers/openai-codex-device` | Thin omp |
-| `muse-code` | `providers/muse-code` | Thin omp |
-| `zai-coding-plan` | `providers/zai-coding-plan` | Thin omp |
-| `xai-omp` | `providers/xai-omp` | Thin omp stream + **native** SuperGrok OAuth |
+| Provider id | Folder | Stream engine |
+|-------------|--------|---------------|
+| `cursor` | `providers/cursor` | Native HTTP/2 Connect + protobuf (`cursor-native.ts`) |
+| `devin` | `providers/devin` | Native Connect HTTP/1.1 + protobuf (`devin-native.ts`) |
+| `google-antigravity` | `providers/gemini-antigravity` | Native CCA SSE (`cca-native.ts`) |
+| `google-gemini-cli` | `providers/google-gemini-cli` | Native CCA SSE (`gemini-cli-native.ts`) |
+| `gitlab-duo` | `providers/gitlab-duo` | Native Anthropic Messages (`shared/native-anthropic-messages.ts`) |
+| `gitlab-duo-agent` | `providers/gitlab-duo-agent` | Native Anthropic Messages (HTTP gateway; Duo Workflow WS deferred) |
+| `openai-codex-device` | `providers/openai-codex-device` | Native Codex Responses SSE (`codex-native.ts`) |
+| `muse-code` | `providers/muse-code` | Native OpenAI Responses (`shared/native-openai-responses.ts`) |
+| `zai-coding-plan` | `providers/zai-coding-plan` | Native Anthropic Messages |
+| `xai-omp` | `providers/xai-omp` | Native OpenAI Responses + **native** SuperGrok OAuth |
 
-## TypeSafe (2026-09-20)
+## TypeSafe
 
-- `update_strategy=dependabot_omp_deps`
-- `wrapper_style=thin_omp_reexport`
+- `update_strategy=dependabot_omp_deps` (OAuth/catalog)
+- `stream_strategy=native_fetch_sse_or_connect`
 - `scope_add=missing_minus_pi_builtins`
 
 ## Thin wrappers
 
 `shared/omp-thin.ts`:
 
-1. `getProviderDefinition(id)` from `@oh-my-pi/pi-ai/registry` → login / refresh / getApiKey
+1. Optional `getProviderDefinition(id)` from `@oh-my-pi/pi-ai/registry` → login / refresh / getApiKey
 2. Adapt earendil `OAuthLoginCallbacks` → omp controller
-3. `streamSimple` → literal dynamic import of omp stream export + event retarget
-4. Models from `@oh-my-pi/pi-catalog` `models.json`
+3. **`streamSimple` must be native** (preferred); `loadStreamFn` deprecated
+4. Models from `@oh-my-pi/pi-catalog` `models.json` via fs
 
-Do **not** vendor full oauth/stream copies when omp exports the hooks.
+**Exception — `xai-omp`:** auth uses `shared/xai-oauth-native.ts` via `oauthFactory`.
 
-**Exception — `xai-omp`:** auth uses `shared/xai-oauth-native.ts` (Pi-compatible SuperGrok device OAuth) via `ThinProviderOptions.oauthFactory`, because Node/jiti often cannot load omp registry TS exports. Stream still imports omp `streamOpenAIResponses`.
+Cursor/Devin use catalog protobuf codecs (`@oh-my-pi/pi-catalog/discovery/*-proto`) — still no `pi-ai/providers/*` stream import.
 
 ## Dependencies
 
 ```json
 "dependencies": {
   "@oh-my-pi/pi-ai": "^18.2.6",
-  "@oh-my-pi/pi-catalog": "^18.2.6"
-},
-"peerDependencies": {
-  "@earendil-works/pi-ai": "*",
-  "@earendil-works/pi-agent-core": "*",
-  "@earendil-works/pi-coding-agent": "*",
-  "@earendil-works/pi-tui": "*",
-  "typebox": "*"
+  "@oh-my-pi/pi-catalog": "^18.2.6",
+  "jiti": "^2.7.0"
 }
 ```
 
-Caret + Dependabot ⇒ `pi update --extensions` on unpinned git install advances omp without manual re-ports.
-
 ## Bun vs Node
 
-Published Pi uses Node+jiti. Install `shared/bun-shim.ts` before omp imports. Some streams (e.g. gitlab-duo-agent WebSocket) may still prefer a real Bun host — document per provider README.
+Published Pi uses Node+jiti. Native streams avoid Bun-only omp provider modules. `shared/bun-shim.ts` remains for any residual omp OAuth/catalog TS loads under Node.

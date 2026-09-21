@@ -3,7 +3,7 @@
  *
  * Registers Cursor as a chat provider with OAuth `/login cursor`
  * (loginDeepControl + poll api2.cursor.sh) and streamSimple that talks to
- * Cursor AgentService Run via @oh-my-pi/pi-ai streamCursor.
+ * Cursor AgentService Run via native HTTP/2 Connect (cursor-native.ts).
  *
  * Usage:
  *   cd packages/coding-agent/examples/extensions/custom-provider-cursor && npm install
@@ -72,11 +72,11 @@ export default async function cursorExtension(pi: ExtensionAPI) {
 				`models: ${models.length} (source=${loaded.source}${
 					loaded.error ? `; note=${loaded.error}` : ""
 				})`,
-				`streamCursor_import: ${probe.ok ? "ok" : `FAIL: ${probe.error}`}`,
+				`cursor_native_probe: ${probe.ok ? "ok" : `FAIL: ${probe.error}`}`,
 				`stream_engine: ${probe.engine ?? "unknown"} (runtime=${probe.runtime ?? "?"})`,
 				"oauth: /login cursor (loginDeepControl + poll; setTimeout sleep)",
-				"stream: streamSimple → bun-shim + omp streamCursor (Node-native Connect TBD in cursor-native.ts)",
-				"deferred: Node-native Connect vendor; quota UI / full omp CursorExecHandlers",
+				"stream: streamSimple → native HTTP/2 Connect AgentService/Run (cursor-native.ts)",
+				"deferred: full omp CursorExecHandlers / MCP / quota UI (local exec-handlers for basics)",
 			];
 			const text = lines.join("\n");
 			ctx.ui?.notify?.(text, probe.ok ? "info" : "warning");

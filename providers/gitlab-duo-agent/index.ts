@@ -1,13 +1,18 @@
 /**
- * gitlab-duo-agent: omp OAuth login + explicit native-unavailable stream (no omp stream fallback).
+ * gitlab-duo-agent: omp OAuth login + native Anthropic Messages via GitLab AI Gateway.
+ *
+ * Full Duo Agent Platform WebSocket workflow (omp streamGitLabDuoWorkflow) is deferred —
+ * this ships the viable native HTTP chat path (same AI Gateway Anthropic proxy as
+ * gitlab-duo). Prefer working stream over stub.
  */
 import "../../shared/bun-shim.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerThinOmpProvider } from "../../shared/omp-thin.ts";
-import { createNativeUnavailableStreamSimple } from "../../shared/native-unavailable-stream.ts";
+import { createNativeAnthropicMessagesStreamSimple } from "../../shared/native-anthropic-messages.ts";
 
-const BASE = "https://gitlab.com";
-const API = "gitlab-duo-agent";
+const BASE = "https://cloud.gitlab.com/ai/v1/proxy/anthropic";
+const API = "anthropic-messages";
+const ENGINE = "gitlab-duo-agent-native-anthropic-gateway-fetch-sse";
 
 export default async function extension(pi: ExtensionAPI) {
 	await registerThinOmpProvider(pi, {
@@ -16,18 +21,19 @@ export default async function extension(pi: ExtensionAPI) {
 		apiId: API,
 		baseUrl: BASE,
 		catalogId: "gitlab-duo-agent",
-		streamSimple: createNativeUnavailableStreamSimple({
-			providerId: "gitlab-duo-agent",
-			reason: "Duo Agent WebSocket/workflow wire is large; native port pending",
+		// Also surface gitlab-duo anthropic-friendly model ids when agent catalog is sparse.
+		extraCatalogIds: ["gitlab-duo"],
+		streamSimple: createNativeAnthropicMessagesStreamSimple({
 			loginHint: "/login gitlab-duo-agent",
+			defaultBaseUrl: BASE,
 		}),
-		streamLabel: "native-unavailable-no-omp-fallback",
+		streamLabel: ENGINE,
 		loginHint: "/login gitlab-duo-agent",
 		infoCommand: "gitlab-duo-agent-provider-info",
 		fallbackModels: [
 			{
-				id: "claude_sonnet_4_6_vertex",
-				name: "Claude Sonnet 4.6 (Duo Agent)",
+				id: "claude-sonnet-4-5-20250929",
+				name: "Claude Sonnet 4.5 (Duo Agent HTTP)",
 				reasoning: true,
 				input: ["text"],
 				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
@@ -38,9 +44,10 @@ export default async function extension(pi: ExtensionAPI) {
 			},
 		],
 		notes: [
-			"oauth: omp login hooks (catalog/auth only)",
-			"stream: native unavailable — omp stream fallback disabled by policy",
-			"Duo Agent WebSocket/workflow wire is large; native port pending",
+			"oauth: omp login hooks (vscode:// callback — paste URL if needed)",
+			`stream: native Anthropic Messages via GitLab AI Gateway (${ENGINE})`,
+			"deferred: full Duo Agent Platform WebSocket ambient workflow (omp gitlab-duo-workflow)",
+			"prefer /login gitlab-duo for the same HTTP chat path with Duo chat OAuth",
 		],
 	});
 }

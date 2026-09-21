@@ -1,15 +1,10 @@
 # google-gemini-cli
 
-Thin wrapper over `@oh-my-pi/pi-ai` for earendil/Pi 0.86.x.
-
 | | |
 |--|--|
 | Login | `/login google-gemini-cli` |
-| Flow | CCA Gemini CLI OAuth |
-| Stream | omp `streamGoogleGeminiCli` (+ bun-shim under Node) |
+| Stream | Native CCA fetch/SSE (`gemini-cli-native.ts`) |
 
-OAuth/stream logic is **not vendored** — Dependabot bumps `@oh-my-pi/*` and `pi update --extensions` picks up fixes.
+Wire: `cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse` with GeminiCLI User-Agent. OAuth via omp login hooks.
 
-## Bun host
-
-If the omp stream path still assumes Bun APIs beyond the shim, run Pi under Bun or prefer Node-native providers (e.g. google-antigravity).
+OAuth may still use omp registry login hooks; **stream does not** import `@oh-my-pi/pi-ai/providers/*`.

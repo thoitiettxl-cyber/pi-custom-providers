@@ -15,7 +15,13 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { inspect } from "node:util";
-import Module, { registerHooks } from "node:module";
+import Module from "node:module";
+
+/** Node 22+; absent on Bun's node:module shim — resolve dynamically. */
+const registerHooks: typeof import("node:module").registerHooks | undefined =
+	typeof (Module as { registerHooks?: unknown }).registerHooks === "function"
+		? (Module as { registerHooks: typeof import("node:module").registerHooks }).registerHooks
+		: undefined;
 
 type HashFn = ((input: string | ArrayBuffer | Uint8Array | object) => number) & {
 	wyhash: (input: string | ArrayBuffer | Uint8Array | object) => number | bigint;

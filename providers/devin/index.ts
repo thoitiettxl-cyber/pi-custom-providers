@@ -3,7 +3,7 @@
  *
  * Registers Devin as a chat provider with OAuth `/login devin`
  * (PKCE + local callback 127.0.0.1:59653, paste fallback) and streamSimple
- * that talks to Cascade via @oh-my-pi/pi-ai streamDevin.
+ * that talks to Cascade via native Connect GetChatMessage (devin-native.ts).
  *
  * Usage:
  *   cd packages/coding-agent/examples/extensions/custom-provider-devin && bun install
@@ -61,10 +61,10 @@ export default async function devinExtension(pi: ExtensionAPI) {
 				`api: ${DEVIN_API_ID}`,
 				`baseUrl: ${DEVIN_API_URL}`,
 				`models: ${models.length} (source=${loaded.source}${loaded.error ? `; note=${loaded.error}` : ""})`,
-				`streamDevin_import: ${probe.ok ? "ok" : `FAIL: ${probe.error}`}`,
+				`devin_native_probe: ${probe.ok ? "ok" : `FAIL: ${probe.error}`}`,
 				`stream_engine: ${probe.engine ?? "unknown"} (runtime=${probe.runtime ?? "?"})`,
 				"oauth: /login devin (PKCE + 127.0.0.1:59653/callback; paste-URL fallback; refresh=none)",
-				"stream: streamSimple → bun-shim + omp streamDevin (Node-native Connect TBD in devin-native.ts)",
+				"stream: streamSimple → native Connect GetChatMessage (devin-native.ts)",
 				"tools: NO Cursor-style execHandlers — Devin uses its own toolCalls channel in Connect chat",
 			];
 			const text = lines.join("\n");

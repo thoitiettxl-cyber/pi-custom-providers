@@ -1,7 +1,7 @@
 {
   "name": "pi-custom-providers",
   "version": "0.86.1",
-  "description": "Pi 0.86 custom chat providers with native fetch/SSE streams (omp OAuth/catalog only) \u2014 tracks @oh-my-pi via Dependabot",
+  "description": "Pi 0.86 custom chat providers with native fetch/SSE/Connect streams (omp OAuth/catalog only) \u2014 tracks @oh-my-pi via Dependabot",
   "type": "module",
   "keywords": [
     "antigravity",

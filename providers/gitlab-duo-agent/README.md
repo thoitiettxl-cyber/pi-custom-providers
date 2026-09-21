@@ -1,15 +1,10 @@
 # gitlab-duo-agent
 
-Thin wrapper over `@oh-my-pi/pi-ai` for earendil/Pi 0.86.x.
-
 | | |
 |--|--|
 | Login | `/login gitlab-duo-agent` |
-| Flow | GitLab OAuth (vscode callback) |
-| Stream | omp `streamGitLabDuoWorkflow` (+ bun-shim under Node) |
+| Stream | Native Anthropic Messages (AI Gateway) |
 
-OAuth/stream logic is **not vendored** — Dependabot bumps `@oh-my-pi/*` and `pi update --extensions` picks up fixes.
+Full Duo Agent Platform WebSocket workflow deferred. HTTP chat uses the same Anthropic proxy as `gitlab-duo`.
 
-## Bun host
-
-If the omp stream path still assumes Bun APIs beyond the shim, run Pi under Bun or prefer Node-native providers (e.g. google-antigravity).
+OAuth may still use omp registry login hooks; **stream does not** import `@oh-my-pi/pi-ai/providers/*`.

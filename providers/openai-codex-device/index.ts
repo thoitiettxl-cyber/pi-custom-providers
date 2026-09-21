@@ -1,12 +1,16 @@
 /**
- * openai-codex-device: omp OAuth login + explicit native-unavailable stream (no omp stream fallback).
+ * openai-codex-device: omp OAuth login + native Codex Responses HTTP SSE (no omp stream).
  */
 import "../../shared/bun-shim.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerThinOmpProvider } from "../../shared/omp-thin.ts";
-import { createNativeUnavailableStreamSimple } from "../../shared/native-unavailable-stream.ts";
+import {
+	CODEX_BASE_URL,
+	CODEX_NATIVE_ENGINE,
+	createNativeCodexStreamSimple,
+} from "./codex-native.ts";
 
-const BASE = "https://chatgpt.com/backend-api";
+const BASE = CODEX_BASE_URL;
 const API = "openai-codex-responses";
 
 export default async function extension(pi: ExtensionAPI) {
@@ -16,12 +20,11 @@ export default async function extension(pi: ExtensionAPI) {
 		apiId: API,
 		baseUrl: BASE,
 		catalogId: "openai-codex",
-		streamSimple: createNativeUnavailableStreamSimple({
-			providerId: "openai-codex-device",
-			reason: "ChatGPT Codex backend wire is large; native HTTP port pending",
+		streamSimple: createNativeCodexStreamSimple({
 			loginHint: "/login openai-codex-device",
+			defaultBaseUrl: BASE,
 		}),
-		streamLabel: "native-unavailable-no-omp-fallback",
+		streamLabel: CODEX_NATIVE_ENGINE,
 		loginHint: "/login openai-codex-device",
 		infoCommand: "openai-codex-device-provider-info",
 		fallbackModels: [
@@ -38,9 +41,9 @@ export default async function extension(pi: ExtensionAPI) {
 			},
 		],
 		notes: [
-			"oauth: omp login hooks (catalog/auth only)",
-			"stream: native unavailable — omp stream fallback disabled by policy",
-			"ChatGPT Codex backend wire is large; native HTTP port pending",
+			"oauth: omp login hooks (device/headless Codex)",
+			`stream: native Codex Responses fetch/SSE (${CODEX_NATIVE_ENGINE})`,
+			"wire: POST chatgpt.com/backend-api/codex/responses (SSE; WS/compaction deferred)",
 		],
 	});
 }
