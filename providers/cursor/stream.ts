@@ -25,6 +25,7 @@ import type {
 import { createAssistantMessageEventStream } from "@earendil-works/pi-ai/compat";
 import { getDefaultCursorExecHandlers } from "./exec-handlers.ts";
 import { CURSOR_NATIVE_ENGINE, isCursorNativeReady } from "./cursor-native.ts";
+import { importOmp } from "../../shared/omp-import.ts";
 
 export const CURSOR_API_URL = "https://api2.cursor.sh";
 export const CURSOR_API_ID = "cursor-agent" as const;
@@ -60,8 +61,8 @@ async function loadStreamCursor(): Promise<OmpStreamCursor> {
 		throw new Error(`${CURSOR_NATIVE_ENGINE} selected but not wired yet`);
 	}
 	try {
-		const mod = await import("@oh-my-pi/pi-ai/providers/cursor");
-		const fn = (mod as { streamCursor?: OmpStreamCursor }).streamCursor;
+		const mod = await importOmp<{ streamCursor?: OmpStreamCursor }>("@oh-my-pi/pi-ai/providers/cursor");
+		const fn = mod.streamCursor;
 		if (typeof fn !== "function") {
 			cachedStreamCursor = null;
 			cachedImportError = "streamCursor export missing from @oh-my-pi/pi-ai/providers/cursor";

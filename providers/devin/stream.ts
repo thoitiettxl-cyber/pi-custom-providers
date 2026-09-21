@@ -23,6 +23,7 @@ import type {
 import { createAssistantMessageEventStream } from "@earendil-works/pi-ai/compat";
 import { normalizeDevinSessionToken } from "./oauth.ts";
 import { DEVIN_NATIVE_ENGINE, isDevinNativeReady } from "./devin-native.ts";
+import { importOmp } from "../../shared/omp-import.ts";
 
 export const DEVIN_API_URL = "https://server.codeium.com";
 export const DEVIN_API_ID = "devin-agent" as const;
@@ -57,8 +58,8 @@ async function loadStreamDevin(): Promise<OmpStreamDevin> {
 		throw new Error(`${DEVIN_NATIVE_ENGINE} selected but not wired yet`);
 	}
 	try {
-		const mod = await import("@oh-my-pi/pi-ai/providers/devin");
-		const fn = (mod as { streamDevin?: OmpStreamDevin }).streamDevin;
+		const mod = await importOmp<{ streamDevin?: OmpStreamDevin }>("@oh-my-pi/pi-ai/providers/devin");
+		const fn = mod.streamDevin;
 		if (typeof fn !== "function") {
 			cachedStreamDevin = null;
 			cachedImportError = "streamDevin export missing from @oh-my-pi/pi-ai/providers/devin";

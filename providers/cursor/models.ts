@@ -3,6 +3,8 @@
  * Curated subset so /model works without catalog; optionally enrich from @oh-my-pi/pi-catalog.
  */
 
+import { importOmp } from "../../shared/omp-import.ts";
+
 export type CursorModelDef = {
 	id: string;
 	name: string;
@@ -163,7 +165,7 @@ export async function loadCursorModels(limit = 40): Promise<{
 	error?: string;
 }> {
 	try {
-		const mod = await import("@oh-my-pi/pi-catalog/models");
+		const mod = await importOmp<{ getBundledModels?: (p: string) => unknown[] }>("@oh-my-pi/pi-catalog/models");
 		const getBundled = (mod as { getBundledModels?: (p: string) => unknown[] }).getBundledModels;
 		if (typeof getBundled !== "function") {
 			return { models: CURATED_CURSOR_MODELS, source: "curated", error: "getBundledModels missing" };

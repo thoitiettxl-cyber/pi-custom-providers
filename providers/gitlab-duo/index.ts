@@ -4,9 +4,10 @@
 import "../../shared/bun-shim.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerThinOmpProvider, type OmpStreamFn } from "../../shared/omp-thin.ts";
+import { importOmp } from "../../shared/omp-import.ts";
 
 async function loadStream(): Promise<OmpStreamFn> {
-	const mod = await import("@oh-my-pi/pi-ai/providers/gitlab-duo");
+	const mod = await importOmp<{ streamGitLabDuo: OmpStreamFn }>("@oh-my-pi/pi-ai/providers/gitlab-duo");
 	return mod.streamGitLabDuo as OmpStreamFn;
 }
 

@@ -5,6 +5,7 @@
  */
 
 import "./bun-shim.ts";
+import { importOmp } from "../../shared/omp-import.ts";
 export type AntigravityModelDef = {
 	id: string;
 	name: string;
@@ -137,9 +138,7 @@ export async function loadAntigravityModels(limit = 40): Promise<{
 	error?: string;
 }> {
 	try {
-		const mod = (await import("@oh-my-pi/pi-catalog/models")) as unknown as {
-			getBundledModels?: (p: string) => unknown[];
-		};
+		const mod = await importOmp<{ getBundledModels?: (p: string) => unknown[] }>("@oh-my-pi/pi-catalog/models");
 		const getBundled = mod.getBundledModels;
 		if (typeof getBundled !== "function") {
 			return { models: CURATED_ANTIGRAVITY_MODELS, source: "curated", error: "getBundledModels missing" };

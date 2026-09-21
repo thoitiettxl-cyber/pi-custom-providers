@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### Fixed
+- **`pi -p` under Node:** loading `@oh-my-pi/pi-ai` TypeScript from `node_modules/.bun` failed with `Stripping types is currently unsupported for files under node_modules`. Added `shared/omp-import.ts` (`importOmp`) — real Bun uses native `import()`, Node loads via **jiti**. All provider/shared dynamic `@oh-my-pi/*` imports go through it. `jiti` is a **runtime** dependency so `pi install` gets it.
+
 - **omp stream under Node+jiti (cursor + xai-omp):** `ERR_INVALID_ARG_TYPE` / `path` undefined and `model.compat.*` crashes when Pi loads `@oh-my-pi` streams.
   - `shared/bun-shim.ts`: polyfill `import.meta.dir`/`path` for jiti `data:` modules; stub `bun` / `bun:ffi` / `bun:sqlite`; `Bun.hash.wyhash`; set `PI_CODING_AGENT_DIR` to `~/.pi/agent` before omp import; Bun text `*.md` load hook.
   - `shared/omp-thin.ts`: preserve catalog `compat` + `identity` through `loadCatalogModels` / `toProviderModels`; `createOmpStreamSimple` always passes `compat: model.compat ?? {}` and `identity` (openai-responses requires `model.compat.*`).

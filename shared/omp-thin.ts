@@ -22,6 +22,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { importOmp } from "./omp-import.ts";
 
 export type OmpModelIdentity = {
 	class: string;
@@ -102,7 +103,7 @@ function adaptCallbacks(cb: OAuthLoginCallbacks): Record<string, unknown> {
 
 export async function loadOmpProviderDef(providerId: string): Promise<OmpProviderDef> {
 	installBunShim();
-	const mod = await import("@oh-my-pi/pi-ai/registry");
+	const mod = await importOmp<Record<string, unknown>>("@oh-my-pi/pi-ai/registry");
 	const getDef = (mod as { getProviderDefinition?: (id: string) => OmpProviderDef | undefined })
 		.getProviderDefinition;
 	if (typeof getDef !== "function") {

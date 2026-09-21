@@ -4,9 +4,10 @@
 import "../../shared/bun-shim.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerThinOmpProvider, type OmpStreamFn } from "../../shared/omp-thin.ts";
+import { importOmp } from "../../shared/omp-import.ts";
 
 async function loadStream(): Promise<OmpStreamFn> {
-	const mod = await import("@oh-my-pi/pi-ai/providers/anthropic");
+	const mod = await importOmp<{ streamAnthropic: OmpStreamFn }>("@oh-my-pi/pi-ai/providers/anthropic");
 	return mod.streamAnthropic as OmpStreamFn;
 }
 

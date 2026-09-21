@@ -10,6 +10,7 @@
 import "./bun-shim.ts";
 import http from "node:http";
 import type { OAuthCredentials, OAuthLoginCallbacks } from "@earendil-works/pi-ai/compat";
+import { importOmp } from "../../shared/omp-import.ts";
 
 /** Public Antigravity desktop OAuth client (oh-my-pi catalog; env override supported). */
 function antigravityClientId(): string {
@@ -92,9 +93,7 @@ export async function generatePKCE(): Promise<{ verifier: string; challenge: str
 
 async function getUserAgent(): Promise<string> {
 	try {
-		const mod = (await import("@oh-my-pi/pi-catalog/wire/gemini-headers")) as {
-			getAntigravityUserAgent?: () => string;
-		};
+		const mod = await importOmp<{ getAntigravityUserAgent?: () => string }>("@oh-my-pi/pi-catalog/wire/gemini-headers");
 		if (typeof mod.getAntigravityUserAgent === "function") {
 			return mod.getAntigravityUserAgent();
 		}

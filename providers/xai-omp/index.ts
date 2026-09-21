@@ -6,13 +6,14 @@ import "./bun-shim.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerThinOmpProvider, type OmpStreamFn } from "../../shared/omp-thin.ts";
 import { makeXaiNativeOAuth } from "../../shared/xai-oauth-native.ts";
+import { importOmp } from "../../shared/omp-import.ts";
 
 const BASE = "https://api.x.ai/v1";
 const API = "openai-responses";
 const ZERO = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
 
 async function loadStream(): Promise<OmpStreamFn> {
-	const mod = await import("@oh-my-pi/pi-ai/providers/openai-responses");
+	const mod = await importOmp<{ streamOpenAIResponses: OmpStreamFn }>("@oh-my-pi/pi-ai/providers/openai-responses");
 	return mod.streamOpenAIResponses as OmpStreamFn;
 }
 
