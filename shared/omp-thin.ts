@@ -1,15 +1,14 @@
 /**
- * Thin bridge from earendil ExtensionAPI oauth/stream to @oh-my-pi/pi-ai.
- * Do not vendor omp oauth/stream implementations — import hooks so
- * `pi update --extensions` (after Dependabot bumps) picks up omp fixes.
+ * Adapter layer (MyInjector-style): catalog + optional omp OAuth only.
+ * Not a stream host — providers must pass native `streamSimple`.
+ * Do not vendor omp oauth/stream implementations — import OAuth/registry hooks so
+ * `pi update --extensions` (after Dependabot bumps) picks up omp OAuth/catalog fixes.
  */
 import { installBunShim } from "./bun-shim.ts";
 installBunShim();
 
 import type {
 	Api,
-	AssistantMessage,
-	AssistantMessageEvent,
 	Model,
 	OAuthCredentials,
 	OAuthLoginCallbacks,
@@ -45,14 +44,6 @@ export type ProviderModelDef = {
 	compat?: Record<string, unknown>;
 	/** omp identity.class (e.g. xai) — not on earendil Model but applyExtension spreads extras. */
 	identity?: OmpModelIdentity;
-};
-
-export type OmpStreamFn = (
-	model: unknown,
-	context: unknown,
-	options?: unknown,
-) => AsyncIterable<AssistantMessageEvent> & {
-	result?: () => Promise<AssistantMessage>;
 };
 
 type StreamContext = {
@@ -337,240 +328,6 @@ export function toProviderModels(models: ProviderModelDef[], defaults?: Provider
 	});
 }
 
-function contentToText(content: unknown): string {
-	if (typeof content === "string") return content;
-	if (!Array.isArray(content)) return "";
-	const parts: string[] = [];
-	for (const block of content) {
-		if (block && typeof block === "object" && "type" in block && (block as { type: string }).type === "text") {
-			const text = (block as { text?: string }).text;
-			if (text) parts.push(text);
-		}
-	}
-	return parts.join("\n");
-}
-
-function extractSystemPrompt(context: StreamContext): string[] | undefined {
-	if (typeof context.systemPrompt === "string" && context.systemPrompt.trim()) {
-		return [context.systemPrompt];
-	}
-	if (Array.isArray(context.systemPrompt) && context.systemPrompt.length) {
-		return context.systemPrompt.filter((s) => typeof s === "string" && s.trim());
-	}
-	const parts: string[] = [];
-	for (const msg of context.messages) {
-		if (msg.role !== "system") continue;
-		const text = contentToText(msg.content);
-		if (text.trim()) parts.push(text);
-	}
-	return parts.length ? parts : undefined;
-}
-
-function extractTools(context: StreamContext): Tool[] | undefined {
-	if (Array.isArray(context.tools) && context.tools.length) return context.tools;
-	for (let i = context.messages.length - 1; i >= 0; i--) {
-		const msg = context.messages[i];
-		if (msg?.role === "system" && Array.isArray(msg.tools) && msg.tools.length > 0) {
-			return msg.tools;
-		}
-	}
-	return undefined;
-}
-
-function emptyUsage(): AssistantMessage["usage"] {
-	return {
-		input: 0,
-		output: 0,
-		cacheRead: 0,
-		cacheWrite: 0,
-		totalTokens: 0,
-		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
-	};
-}
-
-function errorAssistant(
-	model: Model<Api>,
-	errorMessage: string,
-	stopReason: "error" | "aborted",
-): AssistantMessage {
-	return {
-		role: "assistant",
-		content: [],
-		api: model.api,
-		provider: model.provider,
-		model: model.id,
-		usage: emptyUsage(),
-		stopReason,
-		errorMessage,
-		timestamp: Date.now(),
-	} as AssistantMessage;
-}
-
-function retargetPartial(
-	model: Model<Api>,
-	partial: AssistantMessage | undefined,
-): AssistantMessage | undefined {
-	if (!partial) return partial;
-	return { ...partial, api: model.api, provider: model.provider, model: model.id };
-}
-
-function mapEvent(model: Model<Api>, event: AssistantMessageEvent): AssistantMessageEvent | null {
-	if ((event as { type: string }).type === "image_end") return null;
-	switch (event.type) {
-		case "start":
-			return { type: "start", partial: retargetPartial(model, event.partial)! };
-		case "text_start":
-		case "thinking_start":
-		case "toolcall_start":
-		case "text_delta":
-		case "thinking_delta":
-		case "toolcall_delta":
-		case "text_end":
-		case "thinking_end":
-		case "toolcall_end":
-			return { ...event, partial: retargetPartial(model, event.partial)! };
-		case "done": {
-			const rawReason = (event as { reason: string }).reason;
-			const reason = rawReason === "deferred" ? "stop" : event.reason;
-			return {
-				type: "done",
-				reason: reason as "stop" | "length" | "toolUse",
-				message: retargetPartial(model, event.message)!,
-			};
-		}
-		case "error":
-			return {
-				type: "error",
-				reason: event.reason,
-				error: retargetPartial(model, event.error)!,
-			};
-		default:
-			return event;
-	}
-}
-
-export type ThinStreamConfig = {
-	providerId: string;
-	apiId: string;
-	baseUrl: string;
-	/** Literal dynamic import of omp stream (must be static-analyzable at call site). */
-	loadStreamFn: () => Promise<OmpStreamFn>;
-	streamLabel: string;
-	loginHint: string;
-	/** Override omp model.provider / api fields. */
-	ompProviderId?: string;
-	ompApiId?: string;
-};
-
-export function createOmpStreamSimple(cfg: ThinStreamConfig) {
-	let cached: OmpStreamFn | null | undefined;
-	let cachedEngine: string | undefined;
-	let cachedError: string | undefined;
-
-	async function loadStream(): Promise<OmpStreamFn> {
-		if (cached) return cached;
-		if (cached === null) {
-			throw new Error(cachedError ?? `${cfg.streamLabel} unavailable (previous import failed)`);
-		}
-		installBunShim();
-		try {
-			const fn = await cfg.loadStreamFn();
-			if (typeof fn !== "function") {
-				cached = null;
-				cachedError = `${cfg.streamLabel} is not a function`;
-				throw new Error(cachedError);
-			}
-			cached = fn;
-			cachedEngine = `omp-${cfg.streamLabel}+bun-shim`;
-			return cached;
-		} catch (err) {
-			cached = null;
-			cachedError = err instanceof Error ? err.message : String(err);
-			cachedEngine = undefined;
-			throw err;
-		}
-	}
-
-	function streamSimple(model: Model<Api>, context: StreamContext, options?: SimpleStreamOptions) {
-		const out = createAssistantMessageEventStream();
-		(async () => {
-			try {
-				const apiKey = options?.apiKey;
-				if (!apiKey) {
-					throw new Error(`No API key. Run ${cfg.loginHint}.`);
-				}
-				const streamFn = await loadStream();
-				const modelExtra = model as Model<Api> & {
-					compat?: Record<string, unknown>;
-					identity?: OmpModelIdentity;
-				};
-				const ompModel = {
-					id: model.id,
-					name: model.name ?? model.id,
-					api: cfg.ompApiId ?? cfg.apiId,
-					provider: cfg.ompProviderId ?? cfg.providerId,
-					baseUrl: model.baseUrl || cfg.baseUrl,
-					reasoning: model.reasoning,
-					input: model.input,
-					cost: model.cost,
-					contextWindow: model.contextWindow,
-					maxTokens: model.maxTokens,
-					// Required: omp reads model.compat.* / model.identity.class without ?.
-					compat: modelExtra.compat ?? {},
-					identity: modelExtra.identity ?? { class: "unknown", family: model.id },
-				};
-				const ompContext = {
-					systemPrompt: extractSystemPrompt(context),
-					messages: context.messages.filter((m) => m.role !== "system"),
-					tools: extractTools(context),
-				};
-				const inner = streamFn(ompModel, ompContext, {
-					apiKey,
-					signal: options?.signal,
-					headers: options?.headers,
-					// Continuity modelRegistry.complete passes these; drop them and omp
-					// routing/cache helpers may see undefined session identity.
-					maxTokens: options?.maxTokens,
-					temperature: options?.temperature,
-					cacheRetention: options?.cacheRetention,
-					sessionId: options?.sessionId,
-					reasoningEffort: (options as { reasoningEffort?: unknown } | undefined)?.reasoningEffort,
-				});
-				for await (const event of inner) {
-					const mapped = mapEvent(model, event as AssistantMessageEvent);
-					if (mapped) out.push(mapped);
-				}
-				out.end();
-			} catch (err) {
-				const aborted = Boolean(options?.signal?.aborted);
-				const message = err instanceof Error ? err.message : String(err);
-				const error = errorAssistant(model, message, aborted ? "aborted" : "error");
-				out.push({ type: "error", reason: error.stopReason as "aborted" | "error", error });
-				out.end();
-			}
-		})();
-		return out;
-	}
-
-	async function probe(): Promise<{ ok: boolean; error?: string; engine?: string; runtime?: string }> {
-		const bun = (globalThis as { Bun?: { version?: string } }).Bun;
-		const runtime =
-			typeof bun?.version === "string" && bun.version.includes("node-shim")
-				? "node+bun-shim"
-				: typeof bun !== "undefined"
-					? "bun-or-shim"
-					: "node";
-		try {
-			await loadStream();
-			return { ok: true, engine: cachedEngine, runtime };
-		} catch (err) {
-			return { ok: false, error: err instanceof Error ? err.message : String(err), runtime };
-		}
-	}
-
-	return { streamSimple, probe, cfg };
-}
-
 export type ThinStreamSimple = (
 	model: Model<Api>,
 	context: StreamContext,
@@ -597,12 +354,7 @@ export type ThinProviderOptions = {
 	extraCatalogIds?: string[];
 	/** Max models after merge (default 40; raise for large catalogs e.g. xai ~31). */
 	catalogLimit?: number;
-	/**
-	 * @deprecated Prefer native `streamSimple`. When set alone, still loads omp streams
-	 * (legacy). Ignored when `streamSimple` is provided.
-	 */
-	loadStreamFn?: () => Promise<OmpStreamFn>;
-	/** Native (or other) streamSimple — preferred; no @oh-my-pi provider stream import. */
+	/** Required native streamSimple — Adapter must not host omp provider streams. */
 	streamSimple?: ThinStreamSimple;
 	streamLabel: string;
 	loginHint: string;
@@ -646,32 +398,21 @@ export async function registerThinOmpProvider(pi: ExtensionAPI, opts: ThinProvid
 	if (!opts.baseUrl?.trim()) {
 		throw new Error(`registerThinOmpProvider(${opts.id}): baseUrl is required`);
 	}
-	if (!opts.streamSimple && !opts.loadStreamFn) {
+	if (!opts.streamSimple) {
 		throw new Error(
-			`registerThinOmpProvider(${opts.id}): provide native streamSimple (preferred) or loadStreamFn`,
+			`registerThinOmpProvider(${opts.id}): native streamSimple is required (shared/native-*.ts or provider *-native.ts)`,
 		);
 	}
 
-	const stream = opts.streamSimple
-		? {
-				streamSimple: opts.streamSimple,
-				probe: async () => ({
-					ok: true as const,
-					engine: opts.streamLabel,
-					runtime:
-						typeof (globalThis as { Bun?: unknown }).Bun !== "undefined" ? "bun-or-shim" : "node",
-				}),
-			}
-		: createOmpStreamSimple({
-				providerId: opts.id,
-				apiId: opts.apiId,
-				baseUrl: opts.baseUrl,
-				loadStreamFn: opts.loadStreamFn!,
-				streamLabel: opts.streamLabel,
-				loginHint: opts.loginHint,
-				ompProviderId: opts.ompProviderId ?? opts.id,
-				ompApiId: opts.ompApiId ?? opts.apiId,
-			});
+	const stream = {
+		streamSimple: opts.streamSimple,
+		probe: async () => ({
+			ok: true as const,
+			engine: opts.streamLabel,
+			runtime:
+				typeof (globalThis as { Bun?: unknown }).Bun !== "undefined" ? "bun-or-shim" : "node",
+		}),
+	};
 
 	pi.registerProvider(opts.id, {
 		baseUrl: opts.baseUrl,

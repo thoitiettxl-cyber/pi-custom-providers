@@ -7,7 +7,7 @@
  *   Optional: GetUserJwt + AssignModel for router models
  *
  * Protobuf codecs come from @oh-my-pi/pi-catalog/discovery (catalog, not pi-ai
- * provider streams). Do NOT import @oh-my-pi/pi-ai/providers/* for streaming.
+ * provider streams). Do NOT import omp pi-ai provider stream modules for streaming.
  */
 import { gunzipSync, gzipSync } from "node:zlib";
 import type {

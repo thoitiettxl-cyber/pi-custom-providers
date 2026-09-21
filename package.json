@@ -74,7 +74,7 @@
   },
   "scripts": {
     "install:all": "bun install",
-    "test": "bun run --filter '*' test",
+    "test": "node scripts/check-bridge-boundary.mjs && bun run --filter '*' test",
     "test:cursor": "bun run --filter pi-extension-custom-provider-cursor test",
     "test:devin": "bun run --filter pi-extension-custom-provider-devin test",
     "test:antigravity": "bun run --filter pi-extension-custom-provider-gemini-antigravity test",
@@ -82,7 +82,9 @@
     "smoke:node": "node scripts/smoke-node-jiti.mjs",
     "smoke:pong": "node scripts/smoke-stream-pong.mjs",
     "sync:omp": "node scripts/sync-omp-version.mjs",
-    "check:xai-omp-auth": "node scripts/check-xai-omp-auth.mjs"
+    "check:xai-omp-auth": "node scripts/check-xai-omp-auth.mjs",
+    "check:boundary": "node scripts/check-bridge-boundary.mjs",
+    "pretest": "node scripts/check-bridge-boundary.mjs"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",

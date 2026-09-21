@@ -1,8 +1,38 @@
 # Architecture
 
-## Purpose
+Canonical map for **pi-custom-providers**. Detailed rationale: [plans/active/01-ARCHITECTURE-bridge.md](./plans/active/01-ARCHITECTURE-bridge.md). Execution checklist: [plans/active/02-EXECUTION-PLAN-bridge.md](./plans/active/02-EXECUTION-PLAN-bridge.md). Continuity dual-authority: [CONTINUITY-BOUNDARY.md](./CONTINUITY-BOUNDARY.md).
 
-Ship custom chat providers for earendil/Pi 0.86.x as **one installable package**. Streams are **native** (no `@oh-my-pi/pi-ai/providers/*` stream imports). omp supplies catalog `models.json` + OAuth login hooks where not replaced by local oauth.
+## Four layers (MyInjector analogy)
+
+| Layer | Owns | Must NOT |
+|-------|------|----------|
+| **Entry** | Root `package.json` `pi.extensions` + each `providers/*/index.ts` default export — register models, oauth, `streamSimple` | Import omp `pi-ai` provider stream modules |
+| **Bridge** | Stable contract: earendil `ExtensionAPI` + `streamSimple(model, context, options)` → Pi assistant events; public shapes of `shared/native-*.ts` and `shared/xai-oauth-native.ts` | Host Bun internals; Continuity internals |
+| **Adapter** | `shared/omp-thin.ts` (catalog + optional omp OAuth), `omp-import` / `bun-shim`, `*-native.ts` HTTP/SSE/Connect → events | Continuity; feature policy; dual omp+native streams |
+| **Handler** | `providers/<id>/*` wiring (minus `*-native`, which is Adapter) | `@oh-my-pi/pi-ai/providers/*` |
+
+Analog: MyInjector `Entry` / `bridge.*` / adapters / `IHook` vs libxposed — freeze the bridge so omp/Pi bumps do not rewrite handlers.
+
+## Continuity dual-authority
+
+| Authority | Owns | Does not own |
+|-----------|------|--------------|
+| **This repo** | Provider registration, OAuth adapters, **native streams**, catalog from omp `models.json` | Session memory, workflow eligibility |
+| **omp** | Catalog JSON, optional OAuth hooks, Connect protobuf codecs | Runtime stream used by Pi |
+| **Pi host** | ExtensionAPI, auth.json, jiti | omp pins inside this package |
+| **pi-continuity-work-memory** | Memory pipeline, skills, workflow eligibility | Provider stream implementation |
+
+Stream / Bun / omp-provider bugs → fix **here** (native adapter). Never patch Continuity for them. See [CONTINUITY-BOUNDARY.md](./CONTINUITY-BOUNDARY.md).
+
+## Hard invariants
+
+1. **No** `@oh-my-pi/pi-ai/providers` under `providers/**/*.ts`, `shared/native-*.ts`, or `shared/xai-oauth-native.ts` (enforced by `bun run check:boundary`).
+2. Every registered provider passes a **native** `streamSimple`. The old `loadStreamFn` / `createOmpStreamSimple` path was removed.
+3. omp may appear only for: catalog `models.json`, OAuth login/refresh (unless `oauthFactory`), Connect protobuf codecs under `pi-catalog`.
+4. Peer-only `@earendil-works/pi-*` and `typebox`.
+5. Smoke on **Node + jiti** before ship (`smoke:node`; `smoke:pong` when creds exist).
+
+## Provider → stream engine
 
 | Provider id | Folder | Stream engine |
 |-------------|--------|---------------|
@@ -17,35 +47,27 @@ Ship custom chat providers for earendil/Pi 0.86.x as **one installable package**
 | `zai-coding-plan` | `providers/zai-coding-plan` | Native Anthropic Messages |
 | `xai-omp` | `providers/xai-omp` | Native OpenAI Responses + **native** SuperGrok OAuth |
 
-## TypeSafe
+## Adapter notes
 
-- `update_strategy=dependabot_omp_deps` (OAuth/catalog)
-- `stream_strategy=native_fetch_sse_or_connect`
-- `scope_add=missing_minus_pi_builtins`
-
-## Thin wrappers
-
-`shared/omp-thin.ts`:
+`shared/omp-thin.ts` is **Adapter** (catalog + OAuth), not a stream host:
 
 1. Optional `getProviderDefinition(id)` from `@oh-my-pi/pi-ai/registry` → login / refresh / getApiKey
 2. Adapt earendil `OAuthLoginCallbacks` → omp controller
-3. **`streamSimple` must be native** (preferred); `loadStreamFn` deprecated
+3. **`streamSimple` required** (native); missing `streamSimple` throws (`loadStreamFn` removed)
 4. Models from `@oh-my-pi/pi-catalog` `models.json` via fs
 
 **Exception — `xai-omp`:** auth uses `shared/xai-oauth-native.ts` via `oauthFactory`.
 
-Cursor/Devin use catalog protobuf codecs (`@oh-my-pi/pi-catalog/discovery/*-proto`) — still no `pi-ai/providers/*` stream import.
-
-## Dependencies
-
-```json
-"dependencies": {
-  "@oh-my-pi/pi-ai": "^18.2.6",
-  "@oh-my-pi/pi-catalog": "^18.2.6",
-  "jiti": "^2.7.0"
-}
-```
+Cursor/Devin use catalog protobuf codecs (`@oh-my-pi/pi-catalog/discovery/*-proto`) — still no omp provider stream import.
 
 ## Bun vs Node
 
-Published Pi uses Node+jiti. Native streams avoid Bun-only omp provider modules. `shared/bun-shim.ts` remains for any residual omp OAuth/catalog TS loads under Node.
+Published Pi uses Node+jiti. Native streams avoid Bun-only omp provider modules. `shared/bun-shim.ts` remains for residual omp OAuth/catalog TS loads under Node.
+
+## Before ship
+
+```bash
+bun run check:boundary
+bun run smoke:node
+bun run test
+```

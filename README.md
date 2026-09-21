@@ -2,6 +2,8 @@
 
 Custom chat providers for **earendil/Pi 0.86.x** in one installable package. **All streamSimple paths are native fetch/SSE or Connect** — no `@oh-my-pi/pi-ai/providers/*` stream imports. omp is used for OAuth login hooks (where needed) and catalog `models.json` only.
 
+**Bridge boundary:** handlers must not import omp provider streams. Enforce with `bun run check:boundary` before ship (also wired as `pretest`). Continuity stream bugs are fixed here, not in Continuity — see [docs/CONTINUITY-BOUNDARY.md](./docs/CONTINUITY-BOUNDARY.md) and [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
+
 | Provider | Login | Stream engine | Notes |
 |----------|-------|---------------|-------|
 | **Cursor** | `/login cursor` | Native Connect HTTP/2 + protobuf (`cursor-native.ts`) | `AgentService/Run` → `api2.cursor.sh`; local `exec-handlers` |
@@ -61,8 +63,9 @@ Product rule: when omp fixes **OAuth / catalog**, Dependabot bumps `@oh-my-pi/*`
 
 ```bash
 bun install
-bun run smoke:node    # Node+jiti load all factories (no secrets)
-bun run test          # unit tests for hybrid providers
+bun run check:boundary       # fail if providers/native import omp pi-ai/providers
+bun run smoke:node           # Node+jiti load all factories (no secrets)
+bun run test                 # check:boundary (pretest) + hybrid unit tests
 bun run check:xai-omp-auth   # usable xai-omp? expires ISO + lengths only (no token dump)
 ```
 
