@@ -174,6 +174,24 @@
         "@earendil-works/pi-coding-agent",
       ],
     },
+    "providers/xai-omp": {
+      "name": "pi-extension-custom-provider-xai-omp",
+      "version": "0.86.1",
+      "devDependencies": {
+        "@earendil-works/pi-ai": "0.86.1",
+        "@earendil-works/pi-coding-agent": "0.86.1",
+        "@types/node": "22.13.10",
+        "typescript": "5.9.2",
+      },
+      "peerDependencies": {
+        "@earendil-works/pi-ai": "*",
+        "@earendil-works/pi-coding-agent": "*",
+      },
+      "optionalPeers": [
+        "@earendil-works/pi-ai",
+        "@earendil-works/pi-coding-agent",
+      ],
+    },
     "providers/zai-coding-plan": {
       "name": "pi-extension-custom-provider-zai-coding-plan",
       "version": "0.86.1",
@@ -473,6 +491,8 @@
     "pi-extension-custom-provider-muse-code": ["pi-extension-custom-provider-muse-code@workspace:providers/muse-code"],
 
     "pi-extension-custom-provider-openai-codex-device": ["pi-extension-custom-provider-openai-codex-device@workspace:providers/openai-codex-device"],
+
+    "pi-extension-custom-provider-xai-omp": ["pi-extension-custom-provider-xai-omp@workspace:providers/xai-omp"],
 
     "pi-extension-custom-provider-zai-coding-plan": ["pi-extension-custom-provider-zai-coding-plan@workspace:providers/zai-coding-plan"],
 

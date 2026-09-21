@@ -137,6 +137,7 @@ const thin = [
   "openai-codex-device",
   "muse-code",
   "zai-coding-plan",
+  "xai-omp",
 ];
 for (const id of thin) {
   await smoke(id, join(ROOT, `providers/${id}/index.ts`), null);
