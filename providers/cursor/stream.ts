@@ -123,6 +123,10 @@ function nonSystemMessages(messages: StreamContext["messages"]) {
 }
 
 function toOmpModel(model: Model<Api>): Record<string, unknown> {
+	const extra = model as Model<Api> & {
+		compat?: Record<string, unknown>;
+		identity?: { class: string; family?: string; revision?: string };
+	};
 	return {
 		id: model.id,
 		name: model.name ?? model.id,
@@ -134,6 +138,9 @@ function toOmpModel(model: Model<Api>): Record<string, unknown> {
 		cost: model.cost,
 		contextWindow: model.contextWindow,
 		maxTokens: model.maxTokens,
+		// omp streamCursor / shared helpers require model.compat (even {}).
+		compat: extra.compat ?? {},
+		identity: extra.identity ?? { class: "unknown", family: model.id },
 	};
 }
 

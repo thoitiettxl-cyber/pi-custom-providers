@@ -36,6 +36,9 @@ function toProviderModels(models: CursorModelDef[]) {
 		// Pi requires baseUrl on custom models; stamp provider default explicitly.
 		baseUrl: CURSOR_API_URL,
 		api: CURSOR_API_ID,
+		// omp streamCursor requires model.compat (even {}); identity.class when present.
+		compat: m.compat ?? {},
+		...(m.identity?.class ? { identity: m.identity } : {}),
 	}));
 }
 

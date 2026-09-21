@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Fixed
+- **omp stream under Node+jiti (cursor + xai-omp):** `ERR_INVALID_ARG_TYPE` / `path` undefined and `model.compat.*` crashes when Pi loads `@oh-my-pi` streams.
+  - `shared/bun-shim.ts`: polyfill `import.meta.dir`/`path` for jiti `data:` modules; stub `bun` / `bun:ffi` / `bun:sqlite`; `Bun.hash.wyhash`; set `PI_CODING_AGENT_DIR` to `~/.pi/agent` before omp import; Bun text `*.md` load hook.
+  - `shared/omp-thin.ts`: preserve catalog `compat` + `identity` through `loadCatalogModels` / `toProviderModels`; `createOmpStreamSimple` always passes `compat: model.compat ?? {}` and `identity` (openai-responses requires `model.compat.*`).
+  - `providers/cursor`: re-export shared shim; stamp `compat`/`identity` on registered models and `toOmpModel`.
+  - gemini-antigravity unchanged (native CCA, no omp stream).
+
 ### Docs / guardrails
 - **`xai-omp` refresh-token rotation:** refreshing the same SuperGrok OAuth grant on two machines (laptop + agent/CI/box smoke) rotates/revokes the previous refresh token → `invalid_grant`. After any shared-grant refresh, either `/login xai-omp` again on the other machine **or** copy the **post-refresh** `xai-omp` entry from the machine that refreshed (never share one refresh token concurrently). See `providers/xai-omp/README.md`, `INSTALL-VI.md`, `scripts/export-xai-omp-auth-hint.md`.
 - **`scripts/check-xai-omp-auth.mjs`:** reports whether box/local `xai-omp` access is usable (expires ISO, lengths only — no token dump) so you know when a copy is possible.

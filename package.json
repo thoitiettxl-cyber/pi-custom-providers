@@ -55,7 +55,8 @@
     "INSTALL-VI.md",
     "LICENSE",
     "CHANGELOG.md",
-    "AGENTS.md"
+    "AGENTS.md",
+    "shared/bun-node-shim/**"
   ],
   "pi": {
     "extensions": [

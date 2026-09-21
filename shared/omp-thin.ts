@@ -23,6 +23,13 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+export type OmpModelIdentity = {
+	class: string;
+	family?: string;
+	revision?: string;
+	[key: string]: unknown;
+};
+
 export type ProviderModelDef = {
 	id: string;
 	name: string;
@@ -33,6 +40,10 @@ export type ProviderModelDef = {
 	maxTokens: number;
 	api?: string;
 	baseUrl?: string;
+	/** omp stream helpers read model.compat.* without optional chaining. */
+	compat?: Record<string, unknown>;
+	/** omp identity.class (e.g. xai) — not on earendil Model but applyExtension spreads extras. */
+	identity?: OmpModelIdentity;
 };
 
 export type OmpStreamFn = (
@@ -202,6 +213,15 @@ export function loadCatalogModels(
 				? (inputRaw.filter((x) => x === "text" || x === "image") as ("text" | "image")[])
 				: ["text"];
 			const costRaw = (entry.cost as Record<string, number> | undefined) ?? ZERO_COST;
+			const compat =
+				entry.compat && typeof entry.compat === "object" && !Array.isArray(entry.compat)
+					? (entry.compat as Record<string, unknown>)
+					: undefined;
+			const identityRaw = entry.identity;
+			const identity =
+				identityRaw && typeof identityRaw === "object" && !Array.isArray(identityRaw)
+					? (identityRaw as OmpModelIdentity)
+					: undefined;
 			models.push({
 				id,
 				name: typeof entry.name === "string" ? entry.name : id,
@@ -218,6 +238,8 @@ export function loadCatalogModels(
 				maxTokens: typeof entry.maxTokens === "number" ? entry.maxTokens : 16_384,
 				api: typeof entry.api === "string" ? entry.api : undefined,
 				baseUrl: typeof entry.baseUrl === "string" ? entry.baseUrl : undefined,
+				...(compat ? { compat } : {}),
+				...(identity?.class ? { identity } : {}),
 			});
 			if (opts?.limit && models.length >= opts.limit) break;
 		}
@@ -240,7 +262,9 @@ function preferRicherModel(a: ProviderModelDef, b: ProviderModelDef): ProviderMo
 		(m.input?.length ?? 0) +
 		(m.contextWindow > 0 ? 1 : 0) +
 		(m.maxTokens > 0 ? 1 : 0) +
-		(m.reasoning ? 1 : 0);
+		(m.reasoning ? 1 : 0) +
+		(m.compat ? 3 : 0) +
+		(m.identity?.class ? 2 : 0);
 	return score(b) > score(a) ? b : a;
 }
 
@@ -305,6 +329,9 @@ export function toProviderModels(models: ProviderModelDef[], defaults?: Provider
 			maxTokens: m.maxTokens,
 			baseUrl,
 			...(api ? { api } : {}),
+			// openai-responses / shared omp streams require model.compat (even {}).
+			compat: m.compat ?? {},
+			...(m.identity?.class ? { identity: m.identity } : {}),
 		};
 	});
 }
@@ -472,6 +499,10 @@ export function createOmpStreamSimple(cfg: ThinStreamConfig) {
 					throw new Error(`No API key. Run ${cfg.loginHint}.`);
 				}
 				const streamFn = await loadStream();
+				const modelExtra = model as Model<Api> & {
+					compat?: Record<string, unknown>;
+					identity?: OmpModelIdentity;
+				};
 				const ompModel = {
 					id: model.id,
 					name: model.name ?? model.id,
@@ -483,6 +514,9 @@ export function createOmpStreamSimple(cfg: ThinStreamConfig) {
 					cost: model.cost,
 					contextWindow: model.contextWindow,
 					maxTokens: model.maxTokens,
+					// Required: omp reads model.compat.* / model.identity.class without ?.
+					compat: modelExtra.compat ?? {},
+					identity: modelExtra.identity ?? { class: "unknown", family: model.id },
 				};
 				const ompContext = {
 					systemPrompt: extractSystemPrompt(context),

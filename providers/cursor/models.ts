@@ -11,6 +11,8 @@ export type CursorModelDef = {
 	cost: { input: number; output: number; cacheRead: number; cacheWrite: number };
 	contextWindow: number;
 	maxTokens: number;
+	compat?: Record<string, unknown>;
+	identity?: { class: string; family?: string; revision?: string };
 };
 
 const ZERO_COST = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
@@ -130,6 +132,15 @@ function mapCatalogModel(raw: Record<string, unknown>): CursorModelDef | null {
 	const input: ("text" | "image")[] = Array.isArray(inputRaw)
 		? (inputRaw.filter((x) => x === "text" || x === "image") as ("text" | "image")[])
 		: ["text", "image"];
+	const compat =
+		raw.compat && typeof raw.compat === "object" && !Array.isArray(raw.compat)
+			? (raw.compat as Record<string, unknown>)
+			: undefined;
+	const identityRaw = raw.identity;
+	const identity =
+		identityRaw && typeof identityRaw === "object" && !Array.isArray(identityRaw)
+			? (identityRaw as { class: string; family?: string; revision?: string })
+			: undefined;
 	return {
 		id,
 		name,
@@ -138,6 +149,8 @@ function mapCatalogModel(raw: Record<string, unknown>): CursorModelDef | null {
 		cost: ZERO_COST,
 		contextWindow,
 		maxTokens,
+		...(compat ? { compat } : {}),
+		...(identity?.class ? { identity } : {}),
 	};
 }
 

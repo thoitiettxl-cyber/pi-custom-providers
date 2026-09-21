@@ -2,7 +2,7 @@
  * Thin omp wrapper: xai-omp (SuperGrok OAuth-web catalog only; does not collide with Pi first-party `xai`).
  * Auth uses Pi-compatible native SuperGrok device OAuth (same tokens as `xai`) — no omp registry.
  */
-import "../../shared/bun-shim.ts";
+import "./bun-shim.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerThinOmpProvider, type OmpStreamFn } from "../../shared/omp-thin.ts";
 import { makeXaiNativeOAuth } from "../../shared/xai-oauth-native.ts";
