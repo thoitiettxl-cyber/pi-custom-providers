@@ -80,7 +80,8 @@
     "link:extensions": "bash scripts/link-extensions.sh",
     "smoke:node": "node scripts/smoke-node-jiti.mjs",
     "smoke:pong": "node scripts/smoke-stream-pong.mjs",
-    "sync:omp": "node scripts/sync-omp-version.mjs"
+    "sync:omp": "node scripts/sync-omp-version.mjs",
+    "check:xai-omp-auth": "node scripts/check-xai-omp-auth.mjs"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",

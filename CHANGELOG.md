@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Docs / guardrails
+- **`xai-omp` refresh-token rotation:** refreshing the same SuperGrok OAuth grant on two machines (laptop + agent/CI/box smoke) rotates/revokes the previous refresh token → `invalid_grant`. After any shared-grant refresh, either `/login xai-omp` again on the other machine **or** copy the **post-refresh** `xai-omp` entry from the machine that refreshed (never share one refresh token concurrently). See `providers/xai-omp/README.md`, `INSTALL-VI.md`, `scripts/export-xai-omp-auth-hint.md`.
+- **`scripts/check-xai-omp-auth.mjs`:** reports whether box/local `xai-omp` access is usable (expires ISO, lengths only — no token dump) so you know when a copy is possible.
+
 ### Fixed
 - **`xai-omp` OAuth refresh:** no longer depends on `@oh-my-pi/pi-ai/registry` `getProviderDefinition` (missing under Node/jiti). Native SuperGrok device OAuth in `shared/xai-oauth-native.ts` (same client/tokens as Pi first-party `xai`). `ThinProviderOptions.oauthFactory` skips `makeOmpOAuth` when set. Clearer error if other thin providers hit a missing registry export.
 

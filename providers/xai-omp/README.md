@@ -14,3 +14,23 @@ Copying an existing Pi `xai` oauth entry to `xai-omp` in `auth.json` still works
 ## Bun host
 
 If the omp stream path still assumes Bun APIs beyond the shim, run Pi under Bun or prefer Node-native providers (e.g. google-antigravity).
+
+
+## Refresh-token rotation (multi-machine)
+
+SuperGrok OAuth **rotates the refresh token** on each successful refresh. If you (or CI/box smoke) refresh the **same** grant on machine A, machine B’s stored refresh token is revoked and Pi reports:
+
+`invalid_grant: Refresh token has been revoked`
+
+**After agent/CI/box refreshed the shared grant:**
+
+1. On your machine run `/login xai-omp` again, **or**
+2. Copy the **post-refresh** `xai-omp` object from the machine that refreshed into your `~/.pi/agent/auth.json` (replace the whole entry). Check usability without dumping secrets:
+
+```bash
+node scripts/check-xai-omp-auth.mjs
+```
+
+Details: [scripts/export-xai-omp-auth-hint.md](../../scripts/export-xai-omp-auth-hint.md).
+
+**Do not** refresh the same grant concurrently on two machines, paste tokens into chat, or commit `auth.json`. Web OAuth only — no API-key path.

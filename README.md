@@ -63,7 +63,7 @@ Thin wrappers call omp registry login + stream exports (`shared/omp-thin.ts`), e
 | `/login openai-codex-device` | Headless/device Codex (Pi also has browser `openai-codex`) |
 | `/login muse-code` | Meta device-code + minted API key |
 | `/login zai-coding-plan` | zcode:// / paste; mints Z.AI key |
-| `/login xai-omp` | Pi-compatible SuperGrok device OAuth (same tokens as `xai`); catalog `xai-oauth` only (~9); refresh without omp registry |
+| `/login xai-omp` | SuperGrok device OAuth (same tokens as `xai`); catalog `xai-oauth` (~9); **refresh rotates token — do not share grant across machines concurrently**; see `providers/xai-omp/README.md` |
 
 ## Smoke
 
@@ -71,7 +71,10 @@ Thin wrappers call omp registry login + stream exports (`shared/omp-thin.ts`), e
 bun install
 bun run smoke:node    # Node+jiti load all factories (no secrets)
 bun run test          # unit tests for hybrid providers
+bun run check:xai-omp-auth   # usable xai-omp? expires ISO + lengths only (no token dump)
 ```
+
+Live PONG (uses access if still valid; avoids refresh when possible): `bun scripts/smoke-xai-omp-pong.mjs`. Full `pi -p` one-shot has hung historically — prefer extension-path smoke above.
 
 ## License
 

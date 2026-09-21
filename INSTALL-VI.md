@@ -28,6 +28,17 @@ Provider thin omp (catalog SuperGrok OAuth-web ~9 model): `/login xai-omp` — O
 
 Chọn model: `/model cursor/...`, `/model devin/...`, `/model google-antigravity/...`.
 
+## Cảnh báo: refresh token SuperGrok xoay giữa nhiều máy
+
+Cùng một grant SuperGrok **không** được refresh đồng thời trên laptop + agent/CI/box. Mỗi lần refresh sẽ **xoay/thu hồi** refresh token cũ → máy kia gặp `invalid_grant: Refresh token has been revoked`.
+
+Sau khi agent/box đã refresh:
+
+1. Trên máy của bạn chạy lại **`/login xai-omp`**, **hoặc**
+2. Copy **entry `xai-omp` sau refresh** từ máy đã refresh vào `~/.pi/agent/auth.json` (thay cả object). Kiểm tra trước (không in token): `node scripts/check-xai-omp-auth.mjs`. Hướng dẫn: [scripts/export-xai-omp-auth-hint.md](./scripts/export-xai-omp-auth-hint.md).
+
+Không dán access/refresh token vào chat. Chỉ OAuth web — không dùng API key.
+
 ## Cách phụ (dev): symlink
 
 ```bash
