@@ -571,6 +571,12 @@ export function createOmpStreamSimple(cfg: ThinStreamConfig) {
 	return { streamSimple, probe, cfg };
 }
 
+export type ThinStreamSimple = (
+	model: Model<Api>,
+	context: StreamContext,
+	options?: SimpleStreamOptions,
+) => ReturnType<typeof createAssistantMessageEventStream>;
+
 export type ThinProviderOptions = {
 	/** Pi registerProvider id (/login id). */
 	id: string;
@@ -591,7 +597,13 @@ export type ThinProviderOptions = {
 	extraCatalogIds?: string[];
 	/** Max models after merge (default 40; raise for large catalogs e.g. xai ~31). */
 	catalogLimit?: number;
-	loadStreamFn: () => Promise<OmpStreamFn>;
+	/**
+	 * @deprecated Prefer native `streamSimple`. When set alone, still loads omp streams
+	 * (legacy). Ignored when `streamSimple` is provided.
+	 */
+	loadStreamFn?: () => Promise<OmpStreamFn>;
+	/** Native (or other) streamSimple — preferred; no @oh-my-pi provider stream import. */
+	streamSimple?: ThinStreamSimple;
 	streamLabel: string;
 	loginHint: string;
 	ompProviderId?: string;
@@ -631,20 +643,35 @@ export async function registerThinOmpProvider(pi: ExtensionAPI, opts: ThinProvid
 	const getApiKey = opts.oauthFactory
 		? oauth.getApiKey
 		: await resolveOmpGetApiKey(authId);
-	const stream = createOmpStreamSimple({
-		providerId: opts.id,
-		apiId: opts.apiId,
-		baseUrl: opts.baseUrl,
-		loadStreamFn: opts.loadStreamFn,
-		streamLabel: opts.streamLabel,
-		loginHint: opts.loginHint,
-		ompProviderId: opts.ompProviderId ?? opts.id,
-		ompApiId: opts.ompApiId ?? opts.apiId,
-	});
-
 	if (!opts.baseUrl?.trim()) {
 		throw new Error(`registerThinOmpProvider(${opts.id}): baseUrl is required`);
 	}
+	if (!opts.streamSimple && !opts.loadStreamFn) {
+		throw new Error(
+			`registerThinOmpProvider(${opts.id}): provide native streamSimple (preferred) or loadStreamFn`,
+		);
+	}
+
+	const stream = opts.streamSimple
+		? {
+				streamSimple: opts.streamSimple,
+				probe: async () => ({
+					ok: true as const,
+					engine: opts.streamLabel,
+					runtime:
+						typeof (globalThis as { Bun?: unknown }).Bun !== "undefined" ? "bun-or-shim" : "node",
+				}),
+			}
+		: createOmpStreamSimple({
+				providerId: opts.id,
+				apiId: opts.apiId,
+				baseUrl: opts.baseUrl,
+				loadStreamFn: opts.loadStreamFn!,
+				streamLabel: opts.streamLabel,
+				loginHint: opts.loginHint,
+				ompProviderId: opts.ompProviderId ?? opts.id,
+				ompApiId: opts.ompApiId ?? opts.apiId,
+			});
 
 	pi.registerProvider(opts.id, {
 		baseUrl: opts.baseUrl,
@@ -665,7 +692,7 @@ export async function registerThinOmpProvider(pi: ExtensionAPI, opts: ThinProvid
 		handler: async (_args, ctx) => {
 			const probe = await stream.probe();
 			const lines = [
-				`${opts.displayName} (thin omp wrapper)`,
+				`${opts.displayName} (${opts.streamSimple ? "native stream" : "thin omp wrapper"})`,
 				`provider: ${opts.id}`,
 				`omp_auth: ${opts.oauthFactory ? "(native oauthFactory)" : authId}`,
 				`api: ${opts.apiId}`,
@@ -680,7 +707,9 @@ export async function registerThinOmpProvider(pi: ExtensionAPI, opts: ThinProvid
 							`credentials_key_hint: ${opts.storeCredentialsAs} (Pi stores under provider id ${opts.id}; no storeCredentialsAs on ProviderConfig)`,
 						]
 					: []),
-				"update: dependabot bumps @oh-my-pi/* → merge → pi update --extensions",
+				...(opts.streamSimple
+					? ["stream: native fetch/SSE (no @oh-my-pi provider stream)"]
+					: ["update: dependabot bumps @oh-my-pi/* → merge → pi update --extensions"]),
 				...(opts.notes ?? []),
 			];
 			const text = lines.join("\n");

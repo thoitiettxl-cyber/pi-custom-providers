@@ -1,26 +1,35 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 /**
- * One-off live PONG smoke for xai-omp (SuperGrok OAuth).
- * Uses native SuperGrok OAuth refresh (shared/xai-oauth-native.ts). Never prints tokens.
+ * Live PONG smoke for xai-omp via native OpenAI Responses (fetch/SSE).
+ * Never prints tokens.
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { homedir } from "node:os";
+import { createRequire } from "node:module";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const AUTH_PATH = process.env.PI_AUTH_JSON || join(homedir(), ".pi/agent/auth.json");
 const MODEL_ID = process.env.XAI_SMOKE_MODEL || "grok-4.6";
 const BASE = "https://api.x.ai/v1";
-const API = "openai-responses";
 
-// Ensure Node+jiti hosts also get Bun APIs if somehow run under node
-try {
-  await import(join(ROOT, "shared/bun-shim.ts"));
-} catch {
-  /* bun native */
+const require = createRequire(import.meta.url);
+
+function resolveJiti() {
+  const candidates = [
+    "/workspace/pi/node_modules/jiti/lib/jiti.mjs",
+    join(ROOT, "node_modules/jiti/lib/jiti.mjs"),
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) return pathToFileURL(p).href;
+  }
+  return pathToFileURL(require.resolve("jiti/lib/jiti.mjs")).href;
 }
+
+const { createJiti } = await import(resolveJiti());
+const jiti = createJiti(import.meta.url, { interopDefault: true, moduleCache: false });
 
 function loadAuth() {
   if (!existsSync(AUTH_PATH)) return {};
@@ -51,8 +60,8 @@ function summarizeCreds(creds) {
 }
 
 async function loadNativeAuth() {
-  const { makeXaiNativeOAuth } = await import(join(ROOT, "shared/xai-oauth-native.ts"));
-  return makeXaiNativeOAuth();
+  const mod = await jiti.import(join(ROOT, "shared/xai-oauth-native.ts"));
+  return mod.makeXaiNativeOAuth();
 }
 
 async function ensureAccess(auth) {
@@ -60,10 +69,9 @@ async function ensureAccess(auth) {
   if (!creds?.access) throw new Error("no xai-omp/xai-oauth/xai credentials in auth.json");
 
   const oauth = await loadNativeAuth();
-  let refresh = { attempted: false, ok: null, error: null };
+  const refresh = { attempted: false, ok: null, error: null };
 
-  const needsRefresh = isExpired(creds);
-  if (needsRefresh) {
+  if (isExpired(creds)) {
     refresh.attempted = true;
     try {
       const next = await oauth.refreshToken(
@@ -89,30 +97,29 @@ async function ensureAccess(auth) {
     }
   }
 
-  const apiKey = oauth.getApiKey(creds);
-  return { creds, apiKey, refresh, oauth };
-}
-
-async function loadCatalogModel(modelId) {
-  const catalogPath = join(
-    ROOT,
-    "node_modules/.bun/@oh-my-pi+pi-catalog@18.2.6/node_modules/@oh-my-pi/pi-catalog/src/models.json",
-  );
-  const models = JSON.parse(readFileSync(catalogPath, "utf8"));
-  const bucket = models["xai-oauth"] || {};
-  const entry = bucket[modelId] || Object.values(bucket)[0];
-  if (!entry) throw new Error("xai-oauth catalog empty");
-  return entry;
+  return { creds, apiKey: oauth.getApiKey(creds), refresh, oauth };
 }
 
 async function streamOnce(apiKey, modelId) {
-  const { streamOpenAIResponses } = await import("@oh-my-pi/pi-ai/providers/openai-responses");
-  const catalogModel = await loadCatalogModel(modelId);
+  const { createNativeOpenAIResponsesStreamSimple } = await jiti.import(
+    join(ROOT, "shared/native-openai-responses.ts"),
+  );
+  const streamSimple = createNativeOpenAIResponsesStreamSimple({
+    loginHint: "/login xai-omp",
+    defaultBaseUrl: BASE,
+  });
   const model = {
-    ...catalogModel,
-    maxTokens: Math.min(catalogModel.maxTokens || 1024, 1024),
+    id: modelId,
+    name: modelId,
+    api: "openai-responses",
+    provider: "xai-omp",
+    baseUrl: BASE,
+    reasoning: true,
+    input: ["text"],
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    contextWindow: 128000,
+    maxTokens: 256,
   };
-  modelId = model.id;
   const context = {
     systemPrompt: "Reply with exactly: PONG",
     messages: [{ role: "user", content: "Reply with exactly: PONG", timestamp: Date.now() }],
@@ -127,35 +134,35 @@ async function streamOnce(apiKey, modelId) {
     events: 0,
     ms: 0,
     model: modelId,
+    engine: "native-openai-responses-fetch-sse",
   };
 
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 120_000);
   const t0 = Date.now();
   try {
-    const stream = streamOpenAIResponses(model, context, { apiKey, signal: ac.signal });
+    const stream = streamSimple(model, context, { apiKey, signal: ac.signal, maxTokens: 64 });
     let text = "";
     for await (const ev of stream) {
       row.events++;
       if (ev?.type === "text_delta" && typeof ev.delta === "string") text += ev.delta;
-      if (ev?.type === "text" && typeof ev.text === "string") text += ev.text;
-      if (ev?.type === "done" && ev.message) {
-        // some streams emit final message
-        const c = ev.message.content;
-        if (Array.isArray(c)) text += c.filter((x) => x?.type === "text").map((x) => x.text || "").join("");
+      if (ev?.type === "done") {
+        row.stopReason = ev.reason ?? null;
+        if (!text) {
+          const c = ev.message?.content;
+          if (Array.isArray(c)) {
+            text = c.filter((x) => x?.type === "text").map((x) => x.text || "").join("");
+          }
+        }
+        if (ev.message?.errorMessage) {
+          row.errorMessage = String(ev.message.errorMessage).slice(0, 400);
+        }
       }
       if (ev?.type === "error") {
-        row.errorMessage = String(ev.error?.errorMessage || ev.error?.message || ev.message || "error").slice(0, 400);
+        row.stopReason = ev.reason ?? "error";
+        row.errorMessage = String(ev.error?.errorMessage || ev.error?.message || "error").slice(0, 400);
       }
       if (row.events > 500) break;
-    }
-    if (typeof stream.result === "function") {
-      const r = await stream.result();
-      row.stopReason = r?.stopReason ?? null;
-      if (r?.errorMessage) row.errorMessage = String(r.errorMessage).slice(0, 400);
-      if (!text && Array.isArray(r?.content)) {
-        text = r.content.filter((c) => c?.type === "text").map((c) => c.text || "").join("");
-      }
     }
     row.textPreview = text.slice(0, 80);
     row.ok = !row.throw && row.stopReason !== "error" && !row.errorMessage && /pong/i.test(text);
@@ -175,6 +182,7 @@ const report = {
   creds_before: summarizeCreds(pickCreds(auth)),
   refresh: null,
   stream: null,
+  engine: "native-openai-responses-fetch-sse",
 };
 
 let apiKey;
@@ -212,8 +220,7 @@ if (apiKey) {
       saveAuth(auth);
       report.refresh = { attempted: true, ok: true, error: null, reason: "retry-after-stream-fail" };
       report.creds_after = summarizeCreds(updated);
-      const key = oauth.getApiKey(updated);
-      stream = await streamOnce(key, MODEL_ID);
+      stream = await streamOnce(oauth.getApiKey(updated), MODEL_ID);
     } catch (e) {
       report.refresh = {
         attempted: true,

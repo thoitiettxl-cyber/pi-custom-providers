@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Changed
+- **Native streams (Gemini-style fetch/SSE):** all providers stop using `@oh-my-pi/pi-ai/providers/*` for streaming.
+  - Added `shared/native-openai-responses.ts` (xai-omp, muse-code) and `shared/native-anthropic-messages.ts` (zai-coding-plan, gitlab-duo).
+  - `gemini-antigravity` remains on `cca-native.ts`.
+  - `cursor` / `devin` / `google-gemini-cli` / `openai-codex-device` / `gitlab-duo-agent`: Connect/WS wires too large — clear native-unavailable error, **no omp stream fallback**.
+  - `registerThinOmpProvider` accepts native `streamSimple` (preferred over `loadStreamFn`).
+  - `scripts/smoke-xai-omp-pong.mjs` uses native Responses stream.
+  - Do **not** touch Continuity (reset to 305e3e87 on dev-next).
+
+
 ### Fixed
 - **Continuity memory / interactive path under Node:** expand `import.meta.dir`/`path` rewrite in `shared/bun-shim.ts` to `@oh-my-pi` `file:` modules (not only jiti `data:` URLs). Forward `sessionId` / `cacheRetention` / `maxTokens` / `reasoningEffort` from Pi `complete` options through `createOmpStreamSimple` so Continuity `PiMemoryProvider.extract` matches the interactive stream path.
 

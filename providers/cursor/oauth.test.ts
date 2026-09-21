@@ -46,16 +46,11 @@ describe("cursor provider constants", () => {
 });
 
 describe("streamCursor import", () => {
-	it("probes streamCursor via bun-shim (ok under Bun; Node may defer to cursor-native)", async () => {
+	it("reports native-unavailable (omp stream fallback disabled)", async () => {
+		const { probeStreamCursorImport } = await import("./stream.ts");
 		const probe = await probeStreamCursorImport();
-		if (probe.ok) {
-			assert.ok(probe.engine?.includes("streamCursor") || probe.engine?.includes("native"));
-			return;
-		}
-		// Under published Pi Node+jiti, omp still hits Bun-only modules; hybrid allows soft-fail.
-		assert.ok(probe.engine?.includes("pending") || probe.error, probe.error ?? "expected pending native or error");
-		if (process.env.FORCE_OMP_IMPORT === "1") {
-			assert.ok(probe.ok, probe.error ?? "FORCE_OMP_IMPORT=1 requires omp streamCursor");
-		}
+		assert.equal(probe.ok, false);
+		assert.ok(probe.engine?.includes("native"));
+		assert.ok(probe.error?.includes("omp") || probe.error?.includes("native"));
 	});
 });

@@ -4,18 +4,18 @@ Custom chat providers for **earendil/Pi 0.86.x** in one installable package. Hyb
 
 | Provider | Login | Stream |
 |----------|-------|--------|
-| **Cursor** | `/login cursor` | Hybrid bun-shim + omp `streamCursor` |
-| **Devin** | `/login devin` | Hybrid bun-shim + omp `streamDevin` |
+| **Cursor** | `/login cursor` | Native Connect TBD — clear error (no omp fallback) |
+| **Devin** | `/login devin` | Native Connect TBD — clear error (no omp fallback) |
 | **Gemini Antigravity** | `/login google-antigravity` | Node-native CCA SSE |
-| **Google Gemini CLI** | `/login google-gemini-cli` | Thin omp `streamGoogleGeminiCli` |
-| **GitLab Duo** | `/login gitlab-duo` | Thin omp `streamGitLabDuo` |
-| **GitLab Duo Agent** | `/login gitlab-duo-agent` | Thin omp `streamGitLabDuoWorkflow` |
-| **Codex (device)** | `/login openai-codex-device` | Thin omp `streamOpenAICodexResponses` |
-| **Muse Code** | `/login muse-code` | Thin omp `streamOpenAIResponses` |
-| **Z.AI Coding Plan** | `/login zai-coding-plan` | Thin omp `streamAnthropic` |
-| **xAI Grok (SuperGrok OAuth)** | `/login xai-omp` | Native SuperGrok OAuth + omp `streamOpenAIResponses` (oauth-web ~9) |
+| **Google Gemini CLI** | `/login google-gemini-cli` | Native CCA TBD — clear error (no omp fallback) |
+| **GitLab Duo** | `/login gitlab-duo` | Native Anthropic Messages fetch/SSE |
+| **GitLab Duo Agent** | `/login gitlab-duo-agent` | Native WS TBD — clear error (no omp fallback) |
+| **Codex (device)** | `/login openai-codex-device` | Native Codex TBD — clear error (no omp fallback) |
+| **Muse Code** | `/login muse-code` | Native OpenAI Responses fetch/SSE |
+| **Z.AI Coding Plan** | `/login zai-coding-plan` | Native Anthropic Messages fetch/SSE |
+| **xAI Grok (SuperGrok OAuth)** | `/login xai-omp` | Native OpenAI Responses fetch/SSE (`api.x.ai/v1`) |
 
-**Pi range:** 0.86.x (`peerDependencies: "*"`). **omp:** `@oh-my-pi/pi-ai` + `pi-catalog` in **`dependencies` with caret** (`^18.2.6`).
+**Pi range:**Pi range:** 0.86.x (`peerDependencies: "*"`). **omp:** `@oh-my-pi/pi-ai` + `pi-catalog` in **`dependencies` with caret** (`^18.2.6`).
 
 Skipped providers + reasons: **[docs/SKIPPED-PROVIDERS.md](./docs/SKIPPED-PROVIDERS.md)**.
 
@@ -48,7 +48,7 @@ pi update --extensions
 
 That pulls the new commits and reinstalls `dependencies`, so thin wrappers and hybrid shims load the fixed omp modules.
 
-Thin wrappers call omp registry login + stream exports (`shared/omp-thin.ts`), except **`xai-omp`** which uses native SuperGrok device OAuth (`shared/xai-oauth-native.ts`) so refresh works under Node/jiti without omp registry. Hybrid cursor/devin still use bun-shim under Node+jiti; prefer a Bun host if a stream still needs Bun-only APIs.
+Thin wrappers may still use omp registry **login** hooks (`shared/omp-thin.ts` + catalog `models.json`). **Streams are native fetch/SSE** (`shared/native-openai-responses.ts`, `shared/native-anthropic-messages.ts`, antigravity `cca-native.ts`) — no `@oh-my-pi/pi-ai/providers/*` stream imports. **`xai-omp`** auth is native SuperGrok device OAuth (`shared/xai-oauth-native.ts`). Cursor/Devin/Codex/Duo-Agent/Gemini-CLI report a clear native-unavailable error (omp stream fallback disabled).
 
 ## Login notes
 

@@ -85,15 +85,11 @@ describe("devin provider constants", () => {
 });
 
 describe("streamDevin import", () => {
-	it("probes streamDevin via bun-shim (ok under Bun; Node may defer to devin-native)", async () => {
+	it("reports native-unavailable (omp stream fallback disabled)", async () => {
+		const { probeStreamDevinImport } = await import("./stream.ts");
 		const probe = await probeStreamDevinImport();
-		if (probe.ok) {
-			assert.ok(probe.engine?.includes("streamDevin") || probe.engine?.includes("native"));
-			return;
-		}
-		assert.ok(probe.engine?.includes("pending") || probe.error, probe.error ?? "expected pending native or error");
-		if (process.env.FORCE_OMP_IMPORT === "1") {
-			assert.ok(probe.ok, probe.error ?? "FORCE_OMP_IMPORT=1 requires omp streamDevin");
-		}
+		assert.equal(probe.ok, false);
+		assert.ok(probe.engine?.includes("native"));
+		assert.ok(probe.error?.includes("omp") || probe.error?.includes("native"));
 	});
 });

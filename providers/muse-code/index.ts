@@ -1,25 +1,26 @@
 /**
- * Thin omp wrapper: muse-code (Meta Muse subscription device-code).
+ * muse-code: Meta Muse device-code OAuth (omp login) + native OpenAI Responses stream.
  */
 import "../../shared/bun-shim.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { registerThinOmpProvider, type OmpStreamFn } from "../../shared/omp-thin.ts";
-import { importOmp } from "../../shared/omp-import.ts";
+import { registerThinOmpProvider } from "../../shared/omp-thin.ts";
+import { createNativeOpenAIResponsesStreamSimple } from "../../shared/native-openai-responses.ts";
 
-async function loadStream(): Promise<OmpStreamFn> {
-	const mod = await importOmp<{ streamOpenAIResponses: OmpStreamFn }>("@oh-my-pi/pi-ai/providers/openai-responses");
-	return mod.streamOpenAIResponses as OmpStreamFn;
-}
+const BASE = "https://api.meta.ai/v1";
+const API = "openai-responses";
 
 export default async function museCodeExtension(pi: ExtensionAPI) {
 	await registerThinOmpProvider(pi, {
 		id: "muse-code",
 		displayName: "Muse Code",
-		apiId: "openai-responses",
-		baseUrl: "https://api.meta.ai/v1",
+		apiId: API,
+		baseUrl: BASE,
 		catalogId: "muse-code",
-		loadStreamFn: loadStream,
-		streamLabel: "streamOpenAIResponses",
+		streamSimple: createNativeOpenAIResponsesStreamSimple({
+			loginHint: "/login muse-code",
+			defaultBaseUrl: BASE,
+		}),
+		streamLabel: "native-openai-responses-fetch-sse",
 		loginHint: "/login muse-code",
 		infoCommand: "muse-code-provider-info",
 		fallbackModels: [
@@ -31,13 +32,13 @@ export default async function museCodeExtension(pi: ExtensionAPI) {
 				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
 				contextWindow: 128000,
 				maxTokens: 16384,
-				api: "openai-responses",
-				baseUrl: "https://api.meta.ai/v1",
+				api: API,
+				baseUrl: BASE,
 			},
 		],
 		notes: [
-			"oauth: device-code + after-exchange muse-code-key mint",
-			"stream via omp streamOpenAIResponses with muse-code provider transport",
+			"oauth: device-code + after-exchange muse-code-key mint (omp login hooks)",
+			"stream: native OpenAI Responses fetch/SSE (shared/native-openai-responses.ts)",
 		],
 	});
 }
