@@ -5,11 +5,11 @@ Thin wrapper over `@oh-my-pi/pi-ai` for earendil/Pi 0.86.x. SuperGrok **OAuth-we
 | | |
 |--|--|
 | Login | `/login xai-omp` |
-| Auth | omp `xai-oauth` (SuperGrok OAuth) |
+| Auth | **Native** Pi-compatible SuperGrok device OAuth (same client/tokens as first-party `xai`) — does **not** use omp registry |
 | Stream | omp `streamOpenAIResponses` (+ bun-shim under Node) |
 | Catalog | omp `xai-oauth` only (~9 models) |
 
-OAuth/stream logic is **not vendored** — Dependabot bumps `@oh-my-pi/*` and `pi update --extensions` picks up fixes. Never commit secrets; Pi stores credentials under provider id `xai-omp`.
+Copying an existing Pi `xai` oauth entry to `xai-omp` in `auth.json` still works (same tokens). Refresh no longer needs `@oh-my-pi/pi-ai/registry`. Stream still tracks omp via Dependabot; run `pi update --extensions` after bumps. Never commit secrets; Pi stores credentials under provider id `xai-omp`.
 
 ## Bun host
 

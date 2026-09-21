@@ -13,7 +13,7 @@ Custom chat providers for **earendil/Pi 0.86.x** in one installable package. Hyb
 | **Codex (device)** | `/login openai-codex-device` | Thin omp `streamOpenAICodexResponses` |
 | **Muse Code** | `/login muse-code` | Thin omp `streamOpenAIResponses` |
 | **Z.AI Coding Plan** | `/login zai-coding-plan` | Thin omp `streamAnthropic` |
-| **xAI Grok (SuperGrok OAuth)** | `/login xai-omp` | Thin omp `streamOpenAIResponses` (oauth-web ~9) |
+| **xAI Grok (SuperGrok OAuth)** | `/login xai-omp` | Native SuperGrok OAuth + omp `streamOpenAIResponses` (oauth-web ~9) |
 
 **Pi range:** 0.86.x (`peerDependencies: "*"`). **omp:** `@oh-my-pi/pi-ai` + `pi-catalog` in **`dependencies` with caret** (`^18.2.6`).
 
@@ -48,7 +48,7 @@ pi update --extensions
 
 That pulls the new commits and reinstalls `dependencies`, so thin wrappers and hybrid shims load the fixed omp modules.
 
-Thin wrappers call omp registry login + stream exports (`shared/omp-thin.ts`). Hybrid cursor/devin still use bun-shim under Node+jiti; prefer a Bun host if a stream still needs Bun-only APIs.
+Thin wrappers call omp registry login + stream exports (`shared/omp-thin.ts`), except **`xai-omp`** which uses native SuperGrok device OAuth (`shared/xai-oauth-native.ts`) so refresh works under Node/jiti without omp registry. Hybrid cursor/devin still use bun-shim under Node+jiti; prefer a Bun host if a stream still needs Bun-only APIs.
 
 ## Login notes
 
@@ -63,7 +63,7 @@ Thin wrappers call omp registry login + stream exports (`shared/omp-thin.ts`). H
 | `/login openai-codex-device` | Headless/device Codex (Pi also has browser `openai-codex`) |
 | `/login muse-code` | Meta device-code + minted API key |
 | `/login zai-coding-plan` | zcode:// / paste; mints Z.AI key |
-| `/login xai-omp` | SuperGrok OAuth-web; catalog `xai-oauth` only (~9), not API-key `xai` |
+| `/login xai-omp` | Pi-compatible SuperGrok device OAuth (same tokens as `xai`); catalog `xai-oauth` only (~9); refresh without omp registry |
 
 ## Smoke
 

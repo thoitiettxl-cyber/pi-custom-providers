@@ -15,7 +15,7 @@ Re-scanned `@oh-my-pi/pi-catalog` `rules/auth/*.kdl` (login `oauth-code` / `devi
 | `firepass` | `login "api-key"` only — not oauth/browser/device |
 | `qwen-portal` | `login "api-key"` only |
 | `stencil` | oauth-code but **not a model provider** (omp-hosted Stencil services) |
-| `xai-oauth` (as provider id) | Not registered under that id — use package provider **`xai-omp`** (ompAuthId `xai-oauth`, catalog `xai-oauth` only ~9) |
+| `xai-oauth` (as provider id) | Not registered under that id — use package provider **`xai-omp`** (native SuperGrok OAuth + catalog `xai-oauth` only ~9) |
 
 ## Deferred custom hooks (not in user must-add list)
 Documented for a later pass: `alibaba-coding-plan`, `alibaba-token-plan`, `kilo`, `perplexity`, `xiaomi`, `cloudflare-ai-gateway`.

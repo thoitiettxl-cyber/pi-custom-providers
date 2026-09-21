@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### Fixed
+- **`xai-omp` OAuth refresh:** no longer depends on `@oh-my-pi/pi-ai/registry` `getProviderDefinition` (missing under Node/jiti). Native SuperGrok device OAuth in `shared/xai-oauth-native.ts` (same client/tokens as Pi first-party `xai`). `ThinProviderOptions.oauthFactory` skips `makeOmpOAuth` when set. Clearer error if other thin providers hit a missing registry export.
+
 - **baseUrl on custom models:** `toProviderModels` / `registerThinOmpProvider` always stamp provider default `baseUrl` (and `api`) onto every model when the catalog entry omits them — fixes Pi `validateExtensionProvider` error `"baseUrl" is required when defining custom models` (seen on `gitlab-duo` after empty/partial catalog).
 - **Catalog resolve after `pi install`:** `resolveModelsJsonPath` no longer uses export-fragile `require.resolve(.../package.json)`; walks `require.resolve.paths` + parent `node_modules` so git install layouts under `~/.pi/agent/git/...` find `@oh-my-pi/pi-catalog`.
 - Hybrid providers (`cursor`, `devin`, `gemini-antigravity` + CCA native) now set per-model `baseUrl`/`api` explicitly.

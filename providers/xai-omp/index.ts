@@ -1,9 +1,11 @@
 /**
  * Thin omp wrapper: xai-omp (SuperGrok OAuth-web catalog only; does not collide with Pi first-party `xai`).
+ * Auth uses Pi-compatible native SuperGrok device OAuth (same tokens as `xai`) — no omp registry.
  */
 import "../../shared/bun-shim.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerThinOmpProvider, type OmpStreamFn } from "../../shared/omp-thin.ts";
+import { makeXaiNativeOAuth } from "../../shared/xai-oauth-native.ts";
 
 const BASE = "https://api.x.ai/v1";
 const API = "openai-responses";
@@ -17,6 +19,7 @@ async function loadStream(): Promise<OmpStreamFn> {
 export default async function xaiOmpExtension(pi: ExtensionAPI) {
 	await registerThinOmpProvider(pi, {
 		id: "xai-omp",
+		// Auth is native; ompAuthId unused when oauthFactory is set (kept for docs/info clarity).
 		ompAuthId: "xai-oauth",
 		// Pi ProviderConfig has no storeCredentialsAs; /login xai-omp persists under "xai-omp".
 		// Hint documents omp auth bucket (SuperGrok OAuth) for users copying creds.
@@ -33,6 +36,7 @@ export default async function xaiOmpExtension(pi: ExtensionAPI) {
 		ompProviderId: "xai-oauth",
 		ompApiId: API,
 		infoCommand: "xai-omp-provider-info",
+		oauthFactory: async () => makeXaiNativeOAuth("xAI Grok (SuperGrok OAuth)"),
 		fallbackModels: [
 			{
 				id: "grok-4.6",
@@ -104,8 +108,9 @@ export default async function xaiOmpExtension(pi: ExtensionAPI) {
 		notes: [
 			"SuperGrok OAuth-web catalog only (`xai-oauth`, ~9 models) — not the paid API-key `xai` bucket (~31)",
 			"does not collide with Pi first-party provider id `xai` — this registers as `xai-omp`",
-			"oauth hooks from omp `xai-oauth` (SuperGrok web login); Pi stores credentials under provider id `xai-omp`",
+			"auth: Pi-compatible SuperGrok device OAuth (same client/tokens as first-party `xai`); refresh does not need omp registry",
 			"login: `/login xai-omp` OR copy existing Pi `xai` oauth entry to `xai-omp` in auth.json (never commit secrets)",
+			"stream still via omp `streamOpenAIResponses` (+ bun-shim under Node)",
 			"update: Dependabot bumps @oh-my-pi/* → merge → pi update --extensions",
 		],
 	});

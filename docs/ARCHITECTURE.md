@@ -15,6 +15,7 @@ Ship custom chat providers for earendil/Pi 0.86.x as **one installable package**
 | `openai-codex-device` | `providers/openai-codex-device` | Thin omp |
 | `muse-code` | `providers/muse-code` | Thin omp |
 | `zai-coding-plan` | `providers/zai-coding-plan` | Thin omp |
+| `xai-omp` | `providers/xai-omp` | Thin omp stream + **native** SuperGrok OAuth |
 
 ## TypeSafe (2026-09-20)
 
@@ -32,6 +33,8 @@ Ship custom chat providers for earendil/Pi 0.86.x as **one installable package**
 4. Models from `@oh-my-pi/pi-catalog` `models.json`
 
 Do **not** vendor full oauth/stream copies when omp exports the hooks.
+
+**Exception — `xai-omp`:** auth uses `shared/xai-oauth-native.ts` (Pi-compatible SuperGrok device OAuth) via `ThinProviderOptions.oauthFactory`, because Node/jiti often cannot load omp registry TS exports. Stream still imports omp `streamOpenAIResponses`.
 
 ## Dependencies
 

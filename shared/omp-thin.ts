@@ -95,7 +95,11 @@ export async function loadOmpProviderDef(providerId: string): Promise<OmpProvide
 	const getDef = (mod as { getProviderDefinition?: (id: string) => OmpProviderDef | undefined })
 		.getProviderDefinition;
 	if (typeof getDef !== "function") {
-		throw new Error("@oh-my-pi/pi-ai/registry getProviderDefinition missing");
+		throw new Error(
+			`@oh-my-pi/pi-ai/registry getProviderDefinition missing for "${providerId}" ` +
+			`(import succeeded but export absent — Node/jiti often cannot load omp's TS package exports the same way bun does; ` +
+			`run under bun, or use a provider with native oauthFactory e.g. xai-omp)`,
+		);
 	}
 	const def = getDef(providerId);
 	if (!def?.login) {
@@ -553,6 +557,16 @@ export type ThinProviderOptions = {
 	infoCommand?: string;
 	notes?: string[];
 	fallbackModels?: ProviderModelDef[];
+	/**
+	 * Optional custom OAuth factory. When set, skips makeOmpOAuth / loadOmpProviderDef
+	 * (and resolveOmpGetApiKey) so auth works without omp registry exports.
+	 */
+	oauthFactory?: () => Promise<{
+		name: string;
+		login: (callbacks: OAuthLoginCallbacks) => Promise<OAuthCredentials>;
+		refreshToken: (credentials: OAuthCredentials, signal: AbortSignal) => Promise<OAuthCredentials>;
+		getApiKey: (credentials: OAuthCredentials) => string;
+	}>;
 };
 
 /**
@@ -569,8 +583,12 @@ export async function registerThinOmpProvider(pi: ExtensionAPI, opts: ThinProvid
 			: loadCatalogModels(opts.catalogId, { limit: catalogLimit });
 	const models =
 		loaded.models.length > 0 ? loaded.models : (opts.fallbackModels ?? []);
-	const oauth = makeOmpOAuth(authId, opts.displayName);
-	const getApiKey = await resolveOmpGetApiKey(authId);
+	const oauth = opts.oauthFactory
+		? await opts.oauthFactory()
+		: makeOmpOAuth(authId, opts.displayName);
+	const getApiKey = opts.oauthFactory
+		? oauth.getApiKey
+		: await resolveOmpGetApiKey(authId);
 	const stream = createOmpStreamSimple({
 		providerId: opts.id,
 		apiId: opts.apiId,
@@ -607,7 +625,7 @@ export async function registerThinOmpProvider(pi: ExtensionAPI, opts: ThinProvid
 			const lines = [
 				`${opts.displayName} (thin omp wrapper)`,
 				`provider: ${opts.id}`,
-				`omp_auth: ${authId}`,
+				`omp_auth: ${opts.oauthFactory ? "(native oauthFactory)" : authId}`,
 				`api: ${opts.apiId}`,
 				`baseUrl: ${opts.baseUrl}`,
 				`models: ${models.length} (source=${loaded.source}${loaded.error ? `; note=${loaded.error}` : ""})`,

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * One-off live PONG smoke for xai-omp (SuperGrok OAuth).
- * Prefer `bun scripts/smoke-xai-omp-pong.mjs`. Never prints tokens.
+ * Uses native SuperGrok OAuth refresh (shared/xai-oauth-native.ts). Never prints tokens.
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -50,54 +50,47 @@ function summarizeCreds(creds) {
   };
 }
 
-async function loadOmpAuth() {
-  const { getProviderDefinition } = await import("@oh-my-pi/pi-ai/registry");
-  const def = getProviderDefinition("xai-oauth");
-  if (!def) throw new Error("omp getProviderDefinition(xai-oauth) missing");
-  return def;
+async function loadNativeAuth() {
+  const { makeXaiNativeOAuth } = await import(join(ROOT, "shared/xai-oauth-native.ts"));
+  return makeXaiNativeOAuth();
 }
 
 async function ensureAccess(auth) {
   const creds = pickCreds(auth);
   if (!creds?.access) throw new Error("no xai-omp/xai-oauth/xai credentials in auth.json");
 
-  const def = await loadOmpAuth();
+  const oauth = await loadNativeAuth();
   let refresh = { attempted: false, ok: null, error: null };
 
   const needsRefresh = isExpired(creds);
   if (needsRefresh) {
     refresh.attempted = true;
-    if (!def.refreshToken) {
+    try {
+      const next = await oauth.refreshToken(
+        { access: creds.access, refresh: creds.refresh, expires: creds.expires },
+        AbortSignal.timeout(30_000),
+      );
+      if (!next?.access) throw new Error("refresh returned empty access");
+      const updated = {
+        type: "oauth",
+        access: next.access,
+        refresh: next.refresh || creds.refresh,
+        expires: next.expires,
+      };
+      auth["xai-omp"] = { ...updated };
+      auth["xai-oauth"] = { ...updated };
+      auth["xai"] = { ...updated };
+      saveAuth(auth);
+      Object.assign(creds, updated);
+      refresh.ok = true;
+    } catch (e) {
       refresh.ok = false;
-      refresh.error = "xai-oauth has no refreshToken hook";
-    } else {
-      try {
-        const next = await def.refreshToken(
-          { access: creds.access, refresh: creds.refresh, expires: creds.expires },
-          AbortSignal.timeout(30_000),
-        );
-        if (!next?.access) throw new Error("refresh returned empty access");
-        const updated = {
-          type: "oauth",
-          access: next.access,
-          refresh: next.refresh || creds.refresh,
-          expires: next.expires,
-        };
-        auth["xai-omp"] = { ...updated };
-        auth["xai-oauth"] = { ...updated };
-        auth["xai"] = { ...updated };
-        saveAuth(auth);
-        Object.assign(creds, updated);
-        refresh.ok = true;
-      } catch (e) {
-        refresh.ok = false;
-        refresh.error = String(e?.message || e).slice(0, 300);
-      }
+      refresh.error = String(e?.message || e).slice(0, 300);
     }
   }
 
-  const apiKey = def.getApiKey ? def.getApiKey(creds) : creds.access;
-  return { creds, apiKey, refresh, def };
+  const apiKey = oauth.getApiKey(creds);
+  return { creds, apiKey, refresh, oauth };
 }
 
 async function loadCatalogModel(modelId) {
@@ -185,13 +178,13 @@ const report = {
 };
 
 let apiKey;
-let def;
+let oauth;
 try {
   const ensured = await ensureAccess(auth);
   report.refresh = ensured.refresh;
   report.creds_after = summarizeCreds(ensured.creds);
   apiKey = ensured.apiKey;
-  def = ensured.def;
+  oauth = ensured.oauth;
 } catch (e) {
   report.refresh = { attempted: false, ok: false, error: String(e?.message || e).slice(0, 300) };
 }
@@ -201,9 +194,9 @@ if (apiKey) {
   const msg = `${stream.errorMessage || ""} ${stream.throw || ""}`;
   if (!stream.ok && /401|unauthor|expired|invalid.?token|subscription/i.test(msg)) {
     try {
-      if (!def) def = await loadOmpAuth();
+      if (!oauth) oauth = await loadNativeAuth();
       const creds = pickCreds(auth);
-      const next = await def.refreshToken(
+      const next = await oauth.refreshToken(
         { access: creds.access, refresh: creds.refresh, expires: creds.expires },
         AbortSignal.timeout(30_000),
       );
@@ -219,7 +212,7 @@ if (apiKey) {
       saveAuth(auth);
       report.refresh = { attempted: true, ok: true, error: null, reason: "retry-after-stream-fail" };
       report.creds_after = summarizeCreds(updated);
-      const key = def.getApiKey ? def.getApiKey(updated) : updated.access;
+      const key = oauth.getApiKey(updated);
       stream = await streamOnce(key, MODEL_ID);
     } catch (e) {
       report.refresh = {
