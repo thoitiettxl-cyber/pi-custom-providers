@@ -1,6 +1,6 @@
 # Cài đặt nhanh (Tiếng Việt)
 
-Gói **pi-custom-providers** thêm 3 nhà cung cấp chat cho Pi **0.86.1**: Cursor, Devin, Gemini Antigravity.
+Gói **pi-custom-providers** thêm nhiều provider chat cho Pi **0.86.1** (Cursor, Devin, Antigravity, thin omp như `xai-omp`, …).
 
 ## Cách chính: `pi install`
 
@@ -21,7 +21,10 @@ Khởi động lại Pi hoặc gõ `/reload`.
 /login cursor
 /login devin
 /login google-antigravity
+/login xai-omp
 ```
+
+Provider thin omp (catalog đầy đủ Grok): `/login xai-omp` — không trùng Pi first-party `xai`.
 
 Chọn model: `/model cursor/...`, `/model devin/...`, `/model google-antigravity/...`.
 

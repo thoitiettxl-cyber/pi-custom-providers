@@ -1,0 +1,30 @@
+{
+  "name": "pi-extension-custom-provider-xai-omp",
+  "private": true,
+  "version": "0.86.1",
+  "type": "module",
+  "description": "Thin omp wrapper: full xAI Grok catalog (xai-omp) for earendil/Pi — does not collide with first-party xai",
+  "scripts": {
+    "clean": "echo 'nothing to clean'",
+    "build": "echo 'nothing to build'",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "test": "node -e \"console.log('thin wrapper: load smoke via root smoke:node')\""
+  },
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "devDependencies": {
+    "@types/node": "22.13.10",
+    "typescript": "5.9.2",
+    "@earendil-works/pi-ai": "0.86.1",
+    "@earendil-works/pi-coding-agent": "0.86.1"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-ai": { "optional": true },
+    "@earendil-works/pi-coding-agent": { "optional": true }
+  }
+}

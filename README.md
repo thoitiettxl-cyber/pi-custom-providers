@@ -13,6 +13,7 @@ Custom chat providers for **earendil/Pi 0.86.x** in one installable package. Hyb
 | **Codex (device)** | `/login openai-codex-device` | Thin omp `streamOpenAICodexResponses` |
 | **Muse Code** | `/login muse-code` | Thin omp `streamOpenAIResponses` |
 | **Z.AI Coding Plan** | `/login zai-coding-plan` | Thin omp `streamAnthropic` |
+| **xAI Grok (omp)** | `/login xai-omp` | Thin omp `streamOpenAIResponses` (full catalog) |
 
 **Pi range:** 0.86.x (`peerDependencies: "*"`). **omp:** `@oh-my-pi/pi-ai` + `pi-catalog` in **`dependencies` with caret** (`^18.2.6`).
 

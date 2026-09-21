@@ -227,6 +227,50 @@ export function loadCatalogModels(
 	}
 }
 
+/** Prefer the richer catalog entry when merging duplicate model ids. */
+function preferRicherModel(a: ProviderModelDef, b: ProviderModelDef): ProviderModelDef {
+	const score = (m: ProviderModelDef) =>
+		(m.name && m.name !== m.id ? 2 : 0) +
+		(m.api ? 1 : 0) +
+		(m.baseUrl ? 1 : 0) +
+		(m.input?.length ?? 0) +
+		(m.contextWindow > 0 ? 1 : 0) +
+		(m.maxTokens > 0 ? 1 : 0) +
+		(m.reasoning ? 1 : 0);
+	return score(b) > score(a) ? b : a;
+}
+
+/**
+ * Load one or more omp catalog buckets and merge by model id (richer entry wins).
+ */
+export function loadCatalogModelsUnion(
+	catalogIds: string[],
+	opts?: { limit?: number },
+): { models: ProviderModelDef[]; source: string; error?: string } {
+	const byId = new Map<string, ProviderModelDef>();
+	const sources: string[] = [];
+	const errors: string[] = [];
+	for (const catalogId of catalogIds) {
+		// Load each bucket fully; apply opts.limit only after merge.
+		const loaded = loadCatalogModels(catalogId);
+		sources.push(loaded.source);
+		if (loaded.error) errors.push(`${catalogId}: ${loaded.error}`);
+		for (const m of loaded.models) {
+			const prev = byId.get(m.id);
+			byId.set(m.id, prev ? preferRicherModel(prev, m) : m);
+		}
+	}
+	let models = [...byId.values()];
+	if (opts?.limit && models.length > opts.limit) {
+		models = models.slice(0, opts.limit);
+	}
+	return {
+		models,
+		source: sources.join("+"),
+		...(errors.length ? { error: errors.join("; ") } : {}),
+	};
+}
+
 export type ProviderModelDefaults = {
 	baseUrl?: string;
 	api?: string;
@@ -486,11 +530,21 @@ export type ThinProviderOptions = {
 	id: string;
 	/** omp auth registry id (login hooks). */
 	ompAuthId?: string;
+	/**
+	 * Optional credential storage key hint for docs / future Pi support.
+	 * Pi ProviderConfig oauth has no storeCredentialsAs today — credentials persist
+	 * under the registerProvider id. Documented in notes when set.
+	 */
+	storeCredentialsAs?: string;
 	displayName: string;
 	apiId: string;
 	baseUrl: string;
 	/** Catalog bucket for models.json (may differ from id, e.g. zai for zai-coding-plan). */
 	catalogId: string;
+	/** Extra omp catalog buckets merged by model id (richer entry wins). */
+	extraCatalogIds?: string[];
+	/** Max models after merge (default 40; raise for large catalogs e.g. xai ~31). */
+	catalogLimit?: number;
 	loadStreamFn: () => Promise<OmpStreamFn>;
 	streamLabel: string;
 	loginHint: string;
@@ -507,7 +561,12 @@ export type ThinProviderOptions = {
 export async function registerThinOmpProvider(pi: ExtensionAPI, opts: ThinProviderOptions) {
 	installBunShim();
 	const authId = opts.ompAuthId ?? opts.id;
-	const loaded = loadCatalogModels(opts.catalogId, { limit: 40 });
+	const catalogLimit = opts.catalogLimit ?? 40;
+	const catalogIds = [opts.catalogId, ...(opts.extraCatalogIds ?? [])];
+	const loaded =
+		catalogIds.length > 1
+			? loadCatalogModelsUnion(catalogIds, { limit: catalogLimit })
+			: loadCatalogModels(opts.catalogId, { limit: catalogLimit });
 	const models =
 		loaded.models.length > 0 ? loaded.models : (opts.fallbackModels ?? []);
 	const oauth = makeOmpOAuth(authId, opts.displayName);
@@ -555,6 +614,12 @@ export async function registerThinOmpProvider(pi: ExtensionAPI, opts: ThinProvid
 				`stream_import: ${probe.ok ? "ok" : `FAIL: ${probe.error}`}`,
 				`stream_engine: ${probe.engine ?? "unknown"} (runtime=${probe.runtime ?? "?"})`,
 				`login: ${opts.loginHint}`,
+				`catalog: ${catalogIds.join("+")} (limit=${catalogLimit})`,
+				...(opts.storeCredentialsAs
+					? [
+							`credentials_key_hint: ${opts.storeCredentialsAs} (Pi stores under provider id ${opts.id}; no storeCredentialsAs on ProviderConfig)`,
+						]
+					: []),
 				"update: dependabot bumps @oh-my-pi/* → merge → pi update --extensions",
 				...(opts.notes ?? []),
 			];

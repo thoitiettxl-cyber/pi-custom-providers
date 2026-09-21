@@ -13,7 +13,7 @@ link_one() {
   echo "linked $EXT/$name -> $src"
 }
 
-for name in cursor devin gemini-antigravity google-gemini-cli gitlab-duo gitlab-duo-agent openai-codex-device muse-code zai-coding-plan; do
+for name in cursor devin gemini-antigravity google-gemini-cli gitlab-duo gitlab-duo-agent openai-codex-device muse-code zai-coding-plan xai-omp; do
   link_one "$name" "$ROOT/providers/$name"
 done
 

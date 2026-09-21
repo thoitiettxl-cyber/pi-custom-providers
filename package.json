@@ -1,7 +1,7 @@
 {
   "name": "pi-custom-providers",
   "version": "0.86.1",
-  "description": "Pi 0.86 custom chat providers (omp OAuth browser wrappers + cursor/devin/antigravity) — tracks @oh-my-pi via Dependabot",
+  "description": "Pi 0.86 custom chat providers (omp OAuth browser wrappers + cursor/devin/antigravity) \u2014 tracks @oh-my-pi via Dependabot",
   "type": "module",
   "keywords": [
     "antigravity",
@@ -17,7 +17,9 @@
     "openai-codex-device",
     "pi",
     "pi-package",
-    "zai"
+    "zai",
+    "xai",
+    "xai-omp"
   ],
   "license": "MIT",
   "repository": {
@@ -37,7 +39,8 @@
     "providers/gitlab-duo-agent",
     "providers/openai-codex-device",
     "providers/muse-code",
-    "providers/zai-coding-plan"
+    "providers/zai-coding-plan",
+    "providers/xai-omp"
   ],
   "files": [
     "providers/**/*.ts",
@@ -64,7 +67,8 @@
       "./providers/gitlab-duo-agent",
       "./providers/openai-codex-device",
       "./providers/muse-code",
-      "./providers/zai-coding-plan"
+      "./providers/zai-coding-plan",
+      "./providers/xai-omp"
     ]
   },
   "scripts": {
